@@ -609,11 +609,11 @@ const EXERCISE_DEMOS = {
 const weekSchedule = [
   { day: "MON", focus: "Upper Body",   color: "#e85d26", cats: ["pushVariations", "dipsTriCeps"],               catCounts: [3, 2], warmup: "upper" },
   { day: "TUE", focus: "Core + Lower", color: "#2d6a4f", cats: ["core", "lowerBody"],                           catCounts: [3, 3], warmup: "lower" },
-  { day: "WED", focus: "Rest",         color: "#555",    cats: [] },
+  { day: "WED", focus: "Rest",         color: "#888",    cats: [] },
   { day: "THU", focus: "Full Body",    color: "#8b5cf6", cats: ["pushVariations", "pullVariations", "lowerBody", "core"], catCounts: [2, 2, 2, 2], warmup: "full" },
   { day: "FRI", focus: "Back + Cardio",color: "#0ea5e9", cats: ["back", "cardioConditioning"],                  catCounts: [4, 3], warmup: "lower" },
   { day: "SAT", focus: "Core + Mobility", color: "#10b981", cats: ["core", "mobilityWarmup"],                   catCounts: [3, 3] },
-  { day: "SUN", focus: "Rest",         color: "#555",    cats: [] },
+  { day: "SUN", focus: "Rest",         color: "#888",    cats: [] },
 ];
 
 const totalExercises = Object.values(ALL_EXERCISES).reduce((sum, cat) => sum + cat.exercises.length, 0);
@@ -638,7 +638,12 @@ const DEFAULT_PREFS = { name: "", ageRange: "", ailments: [] };
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("library");
+  const [onboarded, setOnboarded] = useState(() =>
+    localStorage.getItem("pt-onboarded") === "true" ||
+    localStorage.getItem("pt-mission-start") !== null
+  );
+  const [onboardStep, setOnboardStep] = useState(0);
+  const [activeTab, setActiveTab] = useState("schedule");
   const [selectedCat, setSelectedCat] = useState("pushVariations");
   const [selectedDay, setSelectedDay] = useState(() => DAY_ABBRS[new Date().getDay()]);
   const [demoEx, setDemoEx] = useState(null);
@@ -646,13 +651,9 @@ export default function App() {
   const [completed, setCompleted] = useState(() => migrateCompleted(loadStorage("pt-completed", {})));
   const [expanded, setExpanded] = useState(null);
   const [prefs, setPrefs] = useState(() => loadStorage("pt-prefs", DEFAULT_PREFS));
-  const [missionStartDate, setMissionStartDate] = useState(() => {
-    const stored = localStorage.getItem("pt-mission-start");
-    if (stored) return stored;
-    const today = new Date().toISOString().split("T")[0];
-    localStorage.setItem("pt-mission-start", today);
-    return today;
-  });
+  const [missionStartDate, setMissionStartDate] = useState(() =>
+    localStorage.getItem("pt-mission-start")
+  );
   const [completedWorkoutDates, setCompletedWorkoutDates] = useState(() =>
     loadStorage("pt-completed-dates", [])
   );
@@ -661,10 +662,9 @@ export default function App() {
 
   const todayStr = new Date().toISOString().split("T")[0];
 
-  const missionDay = Math.max(
-    1,
-    Math.floor((Date.now() - new Date(missionStartDate).getTime()) / 86400000) + 1
-  );
+  const missionDay = missionStartDate
+    ? Math.max(1, Math.floor((Date.now() - new Date(missionStartDate).getTime()) / 86400000) + 1)
+    : 1;
   // weekNumber 0–3: drives exercise rotation so each week shows a different slice
   const weekNumber = Math.floor((missionDay - 1) / 7);
 
@@ -728,6 +728,15 @@ export default function App() {
   const hasCaution = (ex) =>
     prefs.ailments.length > 0 && ex.caution?.some(c => prefs.ailments.includes(c));
 
+  const completeOnboarding = () => {
+    const today = new Date().toISOString().split("T")[0];
+    localStorage.setItem("pt-mission-start", today);
+    localStorage.setItem("pt-onboarded", "true");
+    setMissionStartDate(today);
+    setOnboarded(true);
+    setActiveTab("schedule");
+  };
+
   const resetProgress = () => {
     setCompleted({});
     setCompletedWorkoutDates([]);
@@ -765,6 +774,183 @@ export default function App() {
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  // ── Onboarding overlay ──────────────────────────────────────────────────────
+  if (!onboarded) {
+    const stepDots = (
+      <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 32 }}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{
+            width: i === onboardStep ? 20 : 6, height: 6, borderRadius: 3,
+            background: i === onboardStep ? "#e85d26" : "#252525",
+            transition: "width 0.3s ease",
+          }} />
+        ))}
+      </div>
+    );
+
+    return (
+      <div style={{ minHeight: "100vh", background: "#080808", color: "#f0ede8", fontFamily: "'Georgia', serif", maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", padding: "48px 24px 40px" }}>
+
+        {/* Step 0 — Welcome */}
+        {onboardStep === 0 && (
+          <>
+            <div style={{ flex: 1 }}>
+              <div style={{ textAlign: "center", marginBottom: 36 }}>
+                <div style={{ fontSize: 52, marginBottom: 14 }}>🪖</div>
+                <div style={{ fontSize: 10, letterSpacing: 5, color: "#e85d26", textTransform: "uppercase", marginBottom: 10 }}>Operation Fit</div>
+                <div style={{ fontSize: 26, fontWeight: "bold", lineHeight: 1.2, marginBottom: 12 }}>Military-Style Calisthenics</div>
+                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.6 }}>
+                  Low-impact. Consistent. Built for the long game.<br />
+                  3 sets of 10. No gym required.
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: "#888", textTransform: "uppercase", marginBottom: 8 }}>Your name (optional)</div>
+                <input
+                  value={prefs.name}
+                  onChange={e => setPrefs(p => ({ ...p, name: e.target.value }))}
+                  placeholder="Enter name"
+                  style={{ width: "100%", boxSizing: "border-box", background: "#111", border: "1px solid #252525", borderRadius: 10, padding: "12px 14px", color: "#f0ede8", fontSize: 15, fontFamily: "inherit", outline: "none" }}
+                />
+              </div>
+
+              <div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: "#888", textTransform: "uppercase", marginBottom: 10 }}>Age range</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {AGE_RANGES.map(range => {
+                    const active = prefs.ageRange === range;
+                    return (
+                      <button key={range} onClick={() => setPrefs(p => ({ ...p, ageRange: active ? "" : range }))} style={{
+                        padding: "9px 18px", borderRadius: 20, border: "1px solid",
+                        borderColor: active ? "#e85d26" : "#252525",
+                        background: active ? "#e85d2622" : "transparent",
+                        color: active ? "#e85d26" : "#888",
+                        fontSize: 14, fontFamily: "inherit", cursor: "pointer",
+                      }}>{range}</button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {stepDots}
+            <button onClick={() => setOnboardStep(1)} style={{
+              width: "100%", padding: "15px", borderRadius: 12,
+              border: "none", background: "#e85d26",
+              color: "#fff", fontSize: 15, fontWeight: "bold",
+              fontFamily: "inherit", cursor: "pointer", letterSpacing: 1,
+            }}>Continue →</button>
+          </>
+        )}
+
+        {/* Step 1 — Physical Limitations */}
+        {onboardStep === 1 && (
+          <>
+            <div style={{ flex: 1 }}>
+              <div style={{ marginBottom: 28 }}>
+                <div style={{ fontSize: 10, letterSpacing: 4, color: "#e85d26", textTransform: "uppercase", marginBottom: 10 }}>Step 2 of 3</div>
+                <div style={{ fontSize: 22, fontWeight: "bold", marginBottom: 8 }}>Any Physical Limitations?</div>
+                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.6 }}>
+                  Exercises that match your selections will show a <span style={{ color: "#f59e0b" }}>Modify</span> badge so you can adapt safely. You can always update this in Settings.
+                </div>
+              </div>
+
+              {AILMENTS.map(a => {
+                const active = prefs.ailments.includes(a.key);
+                return (
+                  <div key={a.key} onClick={() => toggleAilment(a.key)} style={{
+                    background: active ? "#120e00" : "#0f0f0f",
+                    border: `1px solid ${active ? "#f59e0b66" : "#1e1e1e"}`,
+                    borderRadius: 11, padding: "13px 15px", marginBottom: 8,
+                    display: "flex", alignItems: "center", gap: 13, cursor: "pointer",
+                  }}>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                      border: `2px solid ${active ? "#f59e0b" : "#444"}`,
+                      background: active ? "#f59e0b" : "transparent",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {active && <span style={{ fontSize: 11, color: "#000", fontWeight: "bold" }}>✓</span>}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: "bold", color: active ? "#f59e0b" : "#f0ede8", marginBottom: 2 }}>{a.label}</div>
+                      <div style={{ fontSize: 11, color: "#888" }}>{a.note}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {stepDots}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setOnboardStep(2)} style={{
+                flex: 1, padding: "15px", borderRadius: 12, border: "1px solid #252525",
+                background: "transparent", color: "#888", fontSize: 14,
+                fontFamily: "inherit", cursor: "pointer",
+              }}>Skip</button>
+              <button onClick={() => setOnboardStep(2)} style={{
+                flex: 2, padding: "15px", borderRadius: 12,
+                border: "none", background: "#e85d26",
+                color: "#fff", fontSize: 15, fontWeight: "bold",
+                fontFamily: "inherit", cursor: "pointer", letterSpacing: 1,
+              }}>Continue →</button>
+            </div>
+          </>
+        )}
+
+        {/* Step 2 — Mission Brief */}
+        {onboardStep === 2 && (
+          <>
+            <div style={{ flex: 1 }}>
+              <div style={{ textAlign: "center", marginBottom: 32 }}>
+                <div style={{ fontSize: 48, marginBottom: 14 }}>🎖️</div>
+                <div style={{ fontSize: 10, letterSpacing: 4, color: "#e85d26", textTransform: "uppercase", marginBottom: 10 }}>Step 3 of 3</div>
+                <div style={{ fontSize: 24, fontWeight: "bold", marginBottom: 10 }}>Your 30-Day Mission</div>
+                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.7 }}>
+                  Complete <strong style={{ color: "#f0ede8" }}>20 workouts</strong> in 30 days.<br />
+                  3 sets of 10. Low impact. Every rep counts.
+                </div>
+              </div>
+
+              {[
+                { week: "Week 1–2", goal: "Build the habit. Muscles begin to adapt.", icon: "🌱" },
+                { week: "Week 3", goal: "Noticeable strength in push-ups and squats.", icon: "💪" },
+                { week: "Week 4", goal: "Core stronger. Posture visibly improved.", icon: "🎯" },
+              ].map((m, i) => (
+                <div key={i} style={{
+                  background: "#0f0f0f", border: "1px solid #1e1e1e",
+                  borderRadius: 11, padding: "14px 16px", marginBottom: 8,
+                  display: "flex", alignItems: "center", gap: 14,
+                }}>
+                  <span style={{ fontSize: 24 }}>{m.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 11, color: "#e85d26", letterSpacing: 1, marginBottom: 3 }}>{m.week}</div>
+                    <div style={{ fontSize: 13, color: "#f0ede8" }}>{m.goal}</div>
+                  </div>
+                </div>
+              ))}
+
+              <div style={{ background: "#0f0f0f", border: "1px solid #1e1e1e", borderRadius: 11, padding: "14px 16px", marginTop: 8 }}>
+                <div style={{ fontSize: 12, color: "#888", lineHeight: 1.6 }}>
+                  📅 Your schedule focuses on <strong style={{ color: "#f0ede8" }}>Upper, Core/Lower, and Full Body</strong> days with built-in rest. Warm-ups are included.
+                </div>
+              </div>
+            </div>
+
+            {stepDots}
+            <button onClick={completeOnboarding} style={{
+              width: "100%", padding: "16px", borderRadius: 12,
+              border: "none", background: "#e85d26",
+              color: "#fff", fontSize: 16, fontWeight: "bold",
+              fontFamily: "inherit", cursor: "pointer", letterSpacing: 1,
+            }}>🪖 Begin Mission</button>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#080808", color: "#f0ede8", fontFamily: "'Georgia', serif", maxWidth: 480, margin: "0 auto" }}>
@@ -834,7 +1020,7 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ fontSize: 10, letterSpacing: 3, color: "#555", textTransform: "uppercase", marginBottom: 10 }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: "#888", textTransform: "uppercase", marginBottom: 10 }}>
               {search
                 ? `${filteredExercises.length} results for "${search}"`
                 : `${ALL_EXERCISES[selectedCat]?.label} — ${ALL_EXERCISES[selectedCat]?.exercises.length} exercises`}
@@ -865,7 +1051,7 @@ export default function App() {
                     </div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                       <span style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 5, padding: "2px 7px", fontSize: 11, color: "#e85d26" }}>{ex.sets}</span>
-                      <span style={{ fontSize: 11, color: "#555" }}>{ex.notes}</span>
+                      <span style={{ fontSize: 11, color: "#888" }}>{ex.notes}</span>
                     </div>
                   </div>
                   <button
@@ -873,7 +1059,7 @@ export default function App() {
                     title="How to perform"
                     style={{
                       background: "none", border: "1px solid #252525", borderRadius: 7,
-                      width: 30, height: 30, color: "#555", fontSize: 14,
+                      width: 30, height: 30, color: "#888", fontSize: 14,
                       cursor: "pointer", flexShrink: 0, fontFamily: "inherit",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}
@@ -911,10 +1097,10 @@ export default function App() {
               display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
               <div>
-                <div style={{ fontSize: 10, color: "#555", letterSpacing: 2, textTransform: "uppercase" }}>{selectedDay}</div>
+                <div style={{ fontSize: 10, color: "#888", letterSpacing: 2, textTransform: "uppercase" }}>{selectedDay}</div>
                 <div style={{ fontSize: 19, fontWeight: "bold", color: dayData?.color }}>{dayData?.focus}</div>
                 {dayExercises.length > 0 && (
-                  <div style={{ fontSize: 11, color: "#555", marginTop: 4 }}>
+                  <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>
                     {dayData?.cats.map(ck => ALL_EXERCISES[ck]?.label).join(" · ")}
                   </div>
                 )}
@@ -922,7 +1108,7 @@ export default function App() {
               {dayExercises.length > 0 && (
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontSize: 26, fontWeight: "bold", color: dayData?.color }}>{dayDone}</div>
-                  <div style={{ fontSize: 10, color: "#555" }}>of {dayExercises.length}</div>
+                  <div style={{ fontSize: 10, color: "#888" }}>of {dayExercises.length}</div>
                 </div>
               )}
             </div>
@@ -943,10 +1129,10 @@ export default function App() {
             )}
 
             {dayExercises.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "48px 20px", color: "#333" }}>
+              <div style={{ textAlign: "center", padding: "48px 20px", color: "#666" }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>😴</div>
                 <div style={{ fontSize: 17 }}>Rest Day</div>
-                <div style={{ fontSize: 12, marginTop: 6, color: "#444" }}>Light walk or 10 min mobility recommended.</div>
+                <div style={{ fontSize: 12, marginTop: 6, color: "#777" }}>Light walk or 10 min mobility recommended.</div>
               </div>
             ) : (
               dayExercises.map((ex, idx) => {
@@ -978,14 +1164,14 @@ export default function App() {
                             }}>Modify</span>
                           )}
                         </div>
-                        <div style={{ fontSize: 11, color: "#555" }}>{ex.sets} · {ex.notes}</div>
+                        <div style={{ fontSize: 11, color: "#888" }}>{ex.sets} · {ex.notes}</div>
                       </div>
                       <button
                         onClick={e => { e.stopPropagation(); setDemoEx(ex); }}
                         title="How to perform"
                         style={{
                           background: "none", border: "1px solid #252525", borderRadius: 7,
-                          width: 28, height: 28, color: "#555", fontSize: 13,
+                          width: 28, height: 28, color: "#888", fontSize: 13,
                           cursor: "pointer", flexShrink: 0, fontFamily: "inherit",
                           display: "flex", alignItems: "center", justifyContent: "center",
                         }}
@@ -996,7 +1182,7 @@ export default function App() {
                     </div>
                     {isExp && (
                       <div style={{ padding: "0 15px 13px", borderTop: "1px solid #181818", paddingTop: 12 }}>
-                        <div style={{ fontSize: 10, color: "#555", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Log Sets</div>
+                        <div style={{ fontSize: 10, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Log Sets</div>
                         <div style={{ display: "flex", gap: 8 }}>
                           {[1, 2, 3].map((s, i) => {
                             const done = completed[`${todayStr}:${ex.name}-${i}`];
@@ -1036,8 +1222,8 @@ export default function App() {
               ].map((s, i) => (
                 <div key={i} style={{ background: "#0f0f0f", border: `1px solid ${s.color}33`, borderRadius: 11, padding: "12px 10px", textAlign: "center" }}>
                   <div style={{ fontSize: 22, fontWeight: "bold", color: s.color }}>{s.value}</div>
-                  <div style={{ fontSize: 9, color: "#555", marginTop: 2, letterSpacing: 0.5 }}>{s.unit}</div>
-                  <div style={{ fontSize: 9, color: "#444", marginTop: 3, letterSpacing: 0.5, textTransform: "uppercase" }}>{s.label}</div>
+                  <div style={{ fontSize: 9, color: "#888", marginTop: 2, letterSpacing: 0.5 }}>{s.unit}</div>
+                  <div style={{ fontSize: 9, color: "#777", marginTop: 3, letterSpacing: 0.5, textTransform: "uppercase" }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -1072,18 +1258,18 @@ export default function App() {
               }}>
                 <div style={{ fontSize: 10, color: "#e85d26", letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>30-Day Mission</div>
                 <div style={{ fontSize: 44, fontWeight: "bold" }}>{workoutsCompleted}</div>
-                <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>of {TARGET_WORKOUTS} workouts</div>
+                <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>of {TARGET_WORKOUTS} workouts</div>
                 <div style={{ marginTop: 14, height: 6, background: "#1a1a1a", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{ height: "100%", width: `${missionProgress}%`, background: "#e85d26", borderRadius: 3, transition: "width 0.4s ease" }} />
                 </div>
-                <div style={{ fontSize: 10, color: "#555", marginTop: 6 }}>
+                <div style={{ fontSize: 10, color: "#888", marginTop: 6 }}>
                   {missionProgress}% complete · Calendar day {missionDay}
                 </div>
               </div>
             )}
 
             {/* This week */}
-            <div style={{ fontSize: 10, color: "#555", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>This Week</div>
+            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>This Week</div>
             <div style={{ display: "flex", gap: 5, marginBottom: 18 }}>
               {weekSchedule.map((d, i) => {
                 const dateStr = thisWeekDates[i];
@@ -1104,19 +1290,19 @@ export default function App() {
             </div>
 
             {/* Library stats */}
-            <div style={{ fontSize: 10, color: "#555", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Exercise Library</div>
+            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Exercise Library</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
               {categories.map(cat => (
                 <div key={cat.key} style={{ background: "#0f0f0f", border: `1px solid ${cat.color}33`, borderRadius: 11, padding: "14px", textAlign: "center" }}>
                   <div style={{ fontSize: 20 }}>{cat.icon}</div>
                   <div style={{ fontSize: 22, fontWeight: "bold", color: cat.color, marginTop: 4 }}>{cat.exercises.length}</div>
-                  <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>{cat.label}</div>
+                  <div style={{ fontSize: 10, color: "#888", marginTop: 3 }}>{cat.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Milestones */}
-            <div style={{ fontSize: 10, color: "#555", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Milestones</div>
+            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Milestones</div>
             {[
               { week: "Week 1–2", goal: "Build the habit, muscles adapt", icon: "🌱" },
               { week: "Week 3", goal: "Noticeable strength in push-ups & squats", icon: "💪" },
@@ -1134,7 +1320,7 @@ export default function App() {
             {/* Active ailment modifications */}
             {activeAilments.length > 0 && (
               <>
-                <div style={{ fontSize: 10, color: "#555", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, marginTop: 18 }}>Your Modifications</div>
+                <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, marginTop: 18 }}>Your Modifications</div>
                 {activeAilments.map((a) => (
                   <div key={a.key} style={{ background: "#0f0f0f", border: "1px solid #2a1a00", borderRadius: 11, padding: "12px 15px", marginBottom: 8, display: "flex", gap: 12, alignItems: "center" }}>
                     <span style={{ fontSize: 20 }}>⚠️</span>
@@ -1148,7 +1334,7 @@ export default function App() {
             )}
 
             {activeAilments.length === 0 && (
-              <div style={{ background: "#0f0f0f", border: "1px solid #1e1e1e", borderRadius: 11, padding: "16px", marginTop: 18, textAlign: "center", color: "#444", fontSize: 12 }}>
+              <div style={{ background: "#0f0f0f", border: "1px solid #1e1e1e", borderRadius: 11, padding: "16px", marginTop: 18, textAlign: "center", color: "#777", fontSize: 12 }}>
                 No modifications set.{" "}
                 <span onClick={() => setActiveTab("settings")} style={{ color: "#e85d26", cursor: "pointer" }}>
                   Add ailments in Settings →
@@ -1163,7 +1349,7 @@ export default function App() {
         ════════════════════════════════════════════════════════════════════ */}
         {activeTab === "settings" && (
           <>
-            <div style={{ fontSize: 10, color: "#555", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Profile</div>
+            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Profile</div>
 
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: 11, color: "#666", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Name (optional)</div>
@@ -1193,8 +1379,8 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{ fontSize: 10, color: "#555", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>Physical Limitations</div>
-            <div style={{ fontSize: 11, color: "#444", marginBottom: 14 }}>
+            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>Physical Limitations</div>
+            <div style={{ fontSize: 11, color: "#777", marginBottom: 14 }}>
               Exercises that conflict with your selections will be flagged with a "Modify" badge in the Library and Schedule.
             </div>
 
@@ -1217,13 +1403,13 @@ export default function App() {
                   </div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: "bold", color: active ? "#f59e0b" : "#f0ede8", marginBottom: 3 }}>{a.label}</div>
-                    <div style={{ fontSize: 11, color: "#555" }}>{a.note}</div>
+                    <div style={{ fontSize: 11, color: "#888" }}>{a.note}</div>
                   </div>
                 </div>
               );
             })}
 
-            <div style={{ fontSize: 10, color: "#555", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, marginTop: 28 }}>Mission</div>
+            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, marginTop: 28 }}>Mission</div>
             <button
               onClick={restartMission}
               style={{
@@ -1234,11 +1420,11 @@ export default function App() {
             >
               Restart 30-Day Mission
             </button>
-            <div style={{ fontSize: 10, color: "#333", textAlign: "center", marginBottom: 20 }}>
+            <div style={{ fontSize: 10, color: "#666", textAlign: "center", marginBottom: 20 }}>
               Resets mission start date, completed sets, and workout history.
             </div>
 
-            <div style={{ fontSize: 10, color: "#555", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Data</div>
+            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Data</div>
             <button
               onClick={resetProgress}
               style={{
@@ -1249,7 +1435,7 @@ export default function App() {
             >
               Reset Workout Progress
             </button>
-            <div style={{ fontSize: 10, color: "#333", textAlign: "center", marginTop: 6 }}>
+            <div style={{ fontSize: 10, color: "#666", textAlign: "center", marginTop: 6 }}>
               Clears logged sets and completed days. Keeps profile and mission start date.
             </div>
           </>
@@ -1288,7 +1474,7 @@ export default function App() {
                     {ALL_EXERCISES[catKey]?.icon} {ALL_EXERCISES[catKey]?.label}
                   </div>
                   <div style={{ fontSize: 18, fontWeight: "bold", lineHeight: 1.2 }}>{demoEx.name}</div>
-                  <div style={{ fontSize: 11, color: "#555", marginTop: 5 }}>{demoEx.sets} · {demoEx.notes}</div>
+                  <div style={{ fontSize: 11, color: "#888", marginTop: 5 }}>{demoEx.sets} · {demoEx.notes}</div>
                 </div>
                 <button
                   onClick={() => setDemoEx(null)}
