@@ -184,3 +184,4 @@ Personal use only. Not intended for redistribution.
 ---
 
 *Built with the help of Claude Code — Anthropic's AI assistant.*
+# pt-tracker
