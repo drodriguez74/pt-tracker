@@ -4,6 +4,8 @@
 
 The original audit identified feature and content gaps from a single technical viewpoint. This plan expands it with a three-perspective expert panel: **Software Architect**, **NSCA-Certified S&C Coach**, and **Fitness App Product Strategist**. The panel surfaced several issues the original audit missed entirely — including an active data corruption bug — and reframes priorities around retention, safety, and differentiation, not just feature completeness.
 
+**Core insight (post-Phase 2):** The app was being treated like a database, not a real-time workout companion. When someone is mid-session with sweaty hands, elevated heart rate, and fatigue, navigating tabs or tapping tiny checkboxes is a UX nightmare. The Active Workout Mode in Phase 3 corrects this by introducing a fully separate, highly restrictive UI flow the moment the user taps "Start."
+
 ---
 
 ## What the Original Audit Got Right
@@ -81,23 +83,115 @@ The original audit identified feature and content gaps from a single technical v
 
 - [x] 3-screen onboarding — name/age → ailments → mission intro, gates mission start
 - [x] Schedule tab as default view
-- [x] Substitute suggestions — `substitutes: string[]` on every cautioned exercise; tappable "Safer option →" on Schedule cards
+- [x] Substitute suggestions — `substitutes: string[]` on every cautioned exercise; "Safer option →" on Schedule cards and inside demo modal
 - [x] Difficulty tiers — `beginner | intermediate | advanced` on all 93 exercises; filter pills in Library; badge on each card
 - [x] Progression protocol — week-aware banner on Schedule (Week 1: 3×8 → Week 4: 4×12)
 - [x] Equipment context in Settings — Bodyweight Only / Home Gym / Commercial / CrossFit
 - [x] Gym icon sprites — react-icons (Game Icons + Font Awesome) replacing emoji
 - [x] Light/dark mode with full CSS variable system
 
-**Remaining from original Phase 2 scope:**
+**Deferred to Phase 3 or later:**
 - [ ] Schedule prefers beginner exercises in weeks 1–2, intermediate in weeks 3–4 (difficulty-aware rotation)
-- [ ] Decompose App.jsx into hooks + tab components (developer ergonomics, not user-facing)
+- [ ] Decompose App.jsx into hooks + tab components
 
 ---
 
-### Phase 3 — Platform Features (some require backend)
+### Phase 3 — Active Workout Mode 🔄 IN PROGRESS
 
-- [ ] Rest timer with audio cues (`setTimeout`/`setInterval` — no backend needed)
-- [ ] Rep and weight logging per set (date-keyed schema from Phase 1 makes this additive)
+**Design principle:** Treat the active workout as a completely separate, highly restrictive UI flow. Remove all navigation, tabs, and small touch targets the moment "Start Workout" is tapped. The app guides the user — they never have to decide what to do next.
+
+#### 3A — State Machine (foundation for everything else)
+
+A `useReducer`-driven session, not a stack of `useState` flags. The reducer owns all phase transitions and is the single source of truth for the workout loop.
+
+**Reducer state shape:**
+```js
+{
+  phase: "idle" | "exercise" | "resting" | "done",
+  exercises: [],        // snapshot taken at START_WORKOUT — never mutates mid-session
+  exerciseIdx: 0,       // current exercise
+  setIdx: 0,            // current set within exercise (0–2)
+  restSecondsLeft: 60,
+  startedAt: null,      // Date.now() — used for session duration display
+  skipped: [],          // exercise names the user passed on
+}
+```
+
+**Action map:**
+| Action | Transition |
+|---|---|
+| `START_WORKOUT(dayKey)` | `idle → exercise`, snapshot exercises, set startedAt |
+| `COMPLETE_SET` | if sets remain: `exercise → resting`; if last set + exercises remain: `exercise → resting` (advance idx); if last set + last exercise: `exercise → done` |
+| `REST_TICK` | decrement `restSecondsLeft`; if 0: `resting → exercise` |
+| `SKIP_EXERCISE` | advance exerciseIdx, stay `exercise`, push to `skipped[]` |
+| `END_WORKOUT` | `any → idle`, write `completedWorkoutDates`, persist `completed` keys |
+
+**Key constraint:** The `exercises` array is a **snapshot** taken at `START_WORKOUT` time. It must never reference the live `ALL_EXERCISES` object during the session — week rotation could change the list if the session crosses midnight.
+
+#### 3B — Active Workout UI
+
+Full-screen takeover — tab layout unmounts, replaced by `<ActiveWorkoutView>`.
+
+**Exercise card:** One exercise visible at a time. Massive typography (exercise name at 32px+). Current set progress shown as large dots (● ● ○ = 2 of 3 done).
+
+**Set completion:** Full-width button spanning the screen — the only primary action. Text: `"Complete Set 2 of 3"` or `"Finish — Last Set"`. No other tappable elements at the same visual weight.
+
+**Gestures:** Swipe right = complete set. Swipe left = skip exercise. Implemented via `touchstart`/`touchend` delta — threshold 60px, no library needed.
+
+**Rest timer:** Occupies the full screen between sets. Giant countdown number. Auto-advances to next set/exercise at zero — no user action required. Skip button (small, top-right) for users who recover faster.
+
+**Progress rail:** Thin strip at top of screen showing exercise position (e.g., 3 of 8 exercises). Not interactive — information only.
+
+**Exit:** Small "×" or "End Workout" in top-left. Tapping shows a confirmation modal before discarding session state.
+
+#### 3C — Screen Wake Lock API
+
+```js
+// Acquire on phase → "exercise" or "resting"
+const wakeLock = await navigator.wakeLock.request("screen");
+// Release on phase → "idle" or "done"
+await wakeLock.release();
+```
+
+Must re-acquire on `visibilitychange` events — the browser automatically releases the lock when the tab is backgrounded. A `useEffect` listening to `document.visibilitychange` handles the re-request.
+
+Graceful degradation: wrap in try/catch. Safari support is partial; the app works without it, screen just dims.
+
+#### 3D — Media Session API (earphone button → complete set)
+
+```js
+navigator.mediaSession.setActionHandler("nexttrack", () => dispatch({ type: "COMPLETE_SET" }));
+navigator.mediaSession.setActionHandler("previoustrack", () => dispatch({ type: "SKIP_EXERCISE" }));
+```
+
+Requires an audio element to be playing (even silent). A 1-second silent MP3 looped in a hidden `<audio>` tag satisfies this. The physical next-track button on Bluetooth earphones maps directly to `COMPLETE_SET`. Zero screen interaction required.
+
+Register handlers on `phase → "exercise"`, clear on `phase → "idle" | "done"`.
+
+#### 3E — Rest Timer with Audio Chime
+
+`setInterval` in a `useEffect` keyed to `phase === "resting"`. Each tick dispatches `REST_TICK`. At zero, the reducer transitions to `"exercise"` and a chime plays.
+
+Chime implementation: `AudioContext` + short sine wave burst (no audio file dependency):
+```js
+const ctx = new AudioContext();
+const osc = ctx.createOscillator();
+osc.frequency.value = 880;
+osc.connect(ctx.destination);
+osc.start(); osc.stop(ctx.currentTime + 0.15);
+```
+
+Two chimes at 3 seconds remaining (warning), one chime at zero (go).
+
+#### 3F — Entry Point
+
+"Start Workout" button added to the Schedule tab's day header when `dayExercises.length > 0` and `phase === "idle"`. Only enabled for today's day (not historical days). Disabled state shown for rest days.
+
+---
+
+### Phase 4 — History, Logging & Analytics
+
+- [ ] Rep and weight logging per set — pre-filled from last session's values (smart defaults)
 - [ ] Workout history browser — per-day detail view, browseable by week
 - [ ] Volume charts — sets per category per week, trend lines
 - [ ] Export to CSV / JSON
@@ -136,24 +230,33 @@ New category: **Gymnastics Skills** — Kipping pull-up, Toes-to-bar, Ring row, 
 
 | File | Role |
 |---|---|
-| `src/App.jsx` | All state, UI, exercises, schedule — monolith (decompose in Phase 2 remainder) |
+| `src/App.jsx` | Global shell, navigation, all tab views |
+| `src/workout/useWorkoutSession.js` | `useReducer` session state machine — Phase 3 |
+| `src/workout/ActiveWorkoutView.jsx` | Full-screen workout UI — Phase 3 |
 | `src/index.css` | CSS custom properties — full light/dark theme |
 | `index.html` | PWA meta tags, Google Fonts |
 | `vite.config.js` | vite-plugin-pwa configuration |
-| `package.json` | Dependencies — react-icons, vite-plugin-pwa |
+| `package.json` | Dependencies |
 
 ---
 
 ## Verification Checklist
 
 - [x] Build passes: `npm run build` — no errors
-- [x] Cross-day key collision: complete Monday → navigate to Thursday → no pre-checked exercises
+- [x] Cross-day key collision fixed — completing Monday does not pre-check Thursday
 - [x] Schedule: Thursday shows push → pull → lower → core, hinge surfaces
 - [x] Warm-up callout appears on every training day
 - [x] Mission progress counts workouts, not calendar days
 - [x] Streak resets after a missed day
 - [x] PWA manifest loads in DevTools → Application → Manifest
 - [x] Light mode: all text readable, semantic surfaces visible
-- [ ] Difficulty filter: selecting "Beginner" shows only beginner exercises
-- [ ] Substitute link: tapping "Safer option" opens correct demo modal
-- [ ] Progression banner: Week 1 shows 3×8, Week 4 shows 4×12
+- [x] Difficulty filter: selecting "Beginner" shows only beginner exercises
+- [x] Substitute: tapping "Safer option" opens correct demo; safer options appear in demo modal
+- [x] Progression banner: Week 1 shows 3×8, Week 4 shows 4×12
+- [ ] Active Workout: tapping "Start Workout" enters full-screen mode
+- [ ] Active Workout: swipe right completes set, swipe left skips exercise
+- [ ] Active Workout: rest timer auto-advances at zero with audio chime
+- [ ] Active Workout: earphone next-track button completes set
+- [ ] Active Workout: screen stays awake for duration (Wake Lock)
+- [ ] Active Workout: completing final set writes to `completedWorkoutDates`
+- [ ] Active Workout: exiting mid-session shows confirmation before discarding

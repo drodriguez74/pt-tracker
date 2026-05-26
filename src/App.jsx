@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { GiMuscleUp, GiWeightLiftingUp, GiLeg, GiBodyHeight, GiRunningShoe, GiMeditation } from "react-icons/gi";
 import { FaDumbbell, FaFire } from "react-icons/fa";
 import { FiSun, FiMoon } from "react-icons/fi";
+import { useWorkoutSession } from "./workout/useWorkoutSession";
+import ActiveWorkoutView from "./workout/ActiveWorkoutView";
 
 function CatIcon({ icon: IconComp, size = 18, color, style }) {
   if (!IconComp) return null;
@@ -685,6 +687,32 @@ export default function App() {
     loadStorage("pt-completed-dates", [])
   );
 
+  // ── Workout session ────────────────────────────────────────────────────────
+
+  const handleWorkoutComplete = useCallback((finishedSession) => {
+    const today = new Date().toISOString().split("T")[0];
+    // Mark all completed sets in the global completed map
+    finishedSession.exercises.forEach((ex, exIdx) => {
+      const wasSkipped = finishedSession.skipped.includes(ex.name);
+      const setsCompleted = wasSkipped ? 0
+        : exIdx < finishedSession.exerciseIdx ? 3
+        : exIdx === finishedSession.exerciseIdx ? finishedSession.setIdx
+        : 0;
+      for (let i = 0; i < setsCompleted; i++) {
+        const k = `${today}:${ex.name}-${i}`;
+        setCompleted(p => ({ ...p, [k]: true }));
+      }
+    });
+    // Mark day complete if any exercises were finished
+    if (!completedWorkoutDates.includes(today)) {
+      setCompletedWorkoutDates(prev => [...prev, today]);
+    }
+  }, [completedWorkoutDates]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { session, startWorkout, completeSet, skipExercise, skipRest, endWorkout } = useWorkoutSession({
+    onComplete: handleWorkoutComplete,
+  });
+
   // ── Computed values needed by effects ──────────────────────────────────────
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -989,6 +1017,20 @@ export default function App() {
     );
   }
 
+  // ── Active workout full-screen takeover ───────────────────────────────────
+  if (session.phase !== "idle") {
+    return (
+      <ActiveWorkoutView
+        session={session}
+        dayData={weekSchedule.find(d => d.day === selectedDay)}
+        onCompleteSet={completeSet}
+        onSkipExercise={skipExercise}
+        onSkipRest={skipRest}
+        onEnd={endWorkout}
+      />
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: "'Barlow Condensed', sans-serif", maxWidth: 480, margin: "0 auto" }}>
 
@@ -1196,6 +1238,23 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            {/* Start Workout button — only shown for today's training day */}
+            {dayExercises.length > 0 && selectedDay === DAY_ABBRS[new Date().getDay()] && (
+              <button
+                onClick={() => startWorkout(dayExercises)}
+                style={{
+                  width: "100%", padding: "16px", borderRadius: 13, border: "none",
+                  background: dayDone === dayExercises.length ? "var(--surface2)" : "#e85d26",
+                  color: dayDone === dayExercises.length ? "var(--muted)" : "#fff",
+                  fontSize: 15, fontWeight: "bold", letterSpacing: 1,
+                  fontFamily: "inherit", cursor: "pointer", marginBottom: 12,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                }}
+              >
+                {dayDone === dayExercises.length ? "✓ Workout Complete" : dayDone > 0 ? "▶ Continue Workout" : "▶ Start Workout"}
+              </button>
+            )}
 
             {/* Progression banner */}
             {missionStartDate && dayExercises.length > 0 && (
