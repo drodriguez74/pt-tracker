@@ -1,10 +1,12 @@
 import { CatIcon } from "../components/CatIcon";
 import { categories } from "../data/exercises";
-import { weekSchedule, TARGET_WORKOUTS } from "../data/schedule";
+import { weekSchedule, TARGET_WORKOUTS, getWeekDates, formatWeekLabel } from "../data/schedule";
+
+const HISTORY_WEEKS = 4;
 
 export default function ProgressTab({
   streak, missionComplete, workoutsCompleted, missionProgress, missionDay,
-  thisWeekDates, completedWorkoutDates, activeAilments,
+  completedWorkoutDates, activeAilments,
   restartMission, setActiveTab,
 }) {
   return (
@@ -64,26 +66,42 @@ export default function ProgressTab({
         </div>
       )}
 
-      {/* This week */}
-      <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>This Week</div>
-      <div style={{ display: "flex", gap: 5, marginBottom: 18 }}>
-        {weekSchedule.map((d, i) => {
-          const dateStr = thisWeekDates[i];
-          const isDone = completedWorkoutDates.includes(dateStr);
-          return (
-            <div key={d.day} style={{
-              flex: 1, textAlign: "center", background: "var(--surface)",
-              border: `1px solid ${isDone ? d.color + "66" : d.cats.length > 0 ? "var(--border)" : "var(--border-subtle)"}`,
-              borderRadius: 9, padding: "9px 0",
-            }}>
-              <div style={{ fontSize: 9, color: isDone ? d.color : "var(--muted)", letterSpacing: 1 }}>{d.day}</div>
-              <div style={{ fontSize: 16, marginTop: 5 }}>
-                {d.cats.length === 0 ? "😴" : isDone ? "✅" : "⬜"}
-              </div>
+      {/* Workout history — 4 weeks */}
+      {Array.from({ length: HISTORY_WEEKS }, (_, w) => {
+        const dates = getWeekDates(w);
+        const label = w === 0 ? "This Week" : formatWeekLabel(dates);
+        const weekDone = weekSchedule.filter((d, i) => d.cats.length > 0 && completedWorkoutDates.includes(dates[i])).length;
+        const weekTotal = weekSchedule.filter(d => d.cats.length > 0).length;
+        return (
+          <div key={w} style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase" }}>{label}</div>
+              {weekDone > 0 && (
+                <div style={{ fontSize: 10, color: "#e85d26", letterSpacing: 1 }}>{weekDone}/{weekTotal} workouts</div>
+              )}
             </div>
-          );
-        })}
-      </div>
+            <div style={{ display: "flex", gap: 5 }}>
+              {weekSchedule.map((d, i) => {
+                const dateStr = dates[i];
+                const isDone = completedWorkoutDates.includes(dateStr);
+                const isRest = d.cats.length === 0;
+                return (
+                  <div key={d.day} style={{
+                    flex: 1, textAlign: "center", background: "var(--surface)",
+                    border: `1px solid ${isDone ? d.color + "66" : isRest ? "var(--border-subtle)" : "var(--border)"}`,
+                    borderRadius: 9, padding: "9px 0",
+                  }}>
+                    <div style={{ fontSize: 9, color: isDone ? d.color : "var(--muted)", letterSpacing: 1 }}>{d.day}</div>
+                    <div style={{ fontSize: 16, marginTop: 5 }}>
+                      {isRest ? "😴" : isDone ? "✅" : "⬜"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
 
       {/* Library stats */}
       <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Exercise Library</div>

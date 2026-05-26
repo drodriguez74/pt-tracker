@@ -1,6 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 
 const TOTAL_SETS = 3;
+
+function getExerciseSeconds(ex) {
+  if (!ex?.sets) return null;
+  if (ex.sets.includes("/side") || ex.sets.includes("/dir")) return null;
+  const match = ex.sets.match(/x(\d+)s/);
+  return match ? parseInt(match[1], 10) : null;
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -20,7 +27,7 @@ function ProgressRail({ current, total }) {
 
 function SetDots({ completed, total }) {
   return (
-    <div style={{ display: "flex", gap: 10, justifyContent: "center", margin: "20px 0" }}>
+    <div style={{ display: "flex", gap: 10, justifyContent: "center", margin: "20px 0 8px" }}>
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} style={{
           width: i < completed ? 18 : 14,
@@ -35,6 +42,37 @@ function SetDots({ completed, total }) {
   );
 }
 
+function ExerciseTimer({ secondsLeft, total }) {
+  const pct = total > 0 ? secondsLeft / total : 0;
+  const urgent = secondsLeft <= 5;
+  const r = 34;
+  const circ = 2 * Math.PI * r;
+  return (
+    <div style={{ position: "relative", width: 86, height: 86, margin: "10px auto 4px" }}>
+      <svg width="86" height="86" style={{ transform: "rotate(-90deg)" }}>
+        <circle cx="43" cy="43" r={r} fill="none" stroke="var(--border2)" strokeWidth="5" />
+        <circle
+          cx="43" cy="43" r={r} fill="none"
+          stroke={urgent ? "#ef4444" : "#10b981"} strokeWidth="5"
+          strokeDasharray={circ}
+          strokeDashoffset={circ * (1 - pct)}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 0.9s linear, stroke 0.3s" }}
+        />
+      </svg>
+      <div style={{
+        position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+      }}>
+        <div style={{ fontSize: 22, fontWeight: "bold", color: urgent ? "#ef4444" : "var(--text)", lineHeight: 1, transition: "color 0.3s" }}>
+          {secondsLeft}
+        </div>
+        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 1 }}>sec</div>
+      </div>
+    </div>
+  );
+}
+
 function RestScreen({ secondsLeft, onSkip }) {
   const pct = (secondsLeft / 60) * 100;
   const urgent = secondsLeft <= 10;
@@ -45,7 +83,6 @@ function RestScreen({ secondsLeft, onSkip }) {
     }}>
       <div style={{ fontSize: 11, letterSpacing: 4, color: "var(--muted)", textTransform: "uppercase", marginBottom: 32 }}>Rest</div>
 
-      {/* Circular countdown */}
       <div style={{ position: "relative", width: 180, height: 180, marginBottom: 36 }}>
         <svg width="180" height="180" style={{ transform: "rotate(-90deg)" }}>
           <circle cx="90" cy="90" r="80" fill="none" stroke="var(--border2)" strokeWidth="6" />
@@ -96,8 +133,8 @@ function DoneScreen({ session, onClose }) {
       <div style={{ display: "flex", gap: 16, marginTop: 28, marginBottom: 40 }}>
         {[
           { label: "Exercises", value: completed },
-          { label: "Minutes", value: elapsed || "<1" },
-          { label: "Sets", value: completed * TOTAL_SETS },
+          { label: "Minutes",   value: elapsed || "<1" },
+          { label: "Sets",      value: completed * TOTAL_SETS },
         ].map(s => (
           <div key={s.label} style={{ background: "var(--surface2)", borderRadius: 12, padding: "14px 20px", textAlign: "center" }}>
             <div style={{ fontSize: 26, fontWeight: "bold", color: "#e85d26" }}>{s.value}</div>
@@ -132,9 +169,9 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
   const touchStartY = useRef(null);
 
   const ex = session.exercises[session.exerciseIdx];
-  const isToday = true; // only today's workouts can be started
+  const timerTotal = getExerciseSeconds(ex);
+  const isTimed = session.exerciseSecondsLeft !== null && timerTotal !== null;
 
-  // Swipe gesture on exercise card
   function handleTouchStart(e) {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -146,13 +183,15 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
     const dy = e.changedTouches[0].clientY - touchStartY.current;
     touchStartX.current = null;
     touchStartY.current = null;
-    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return; // too short or mostly vertical
-    if (dx > 0) onCompleteSet(); // swipe right → complete
-    else onSkipExercise();       // swipe left → skip
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+    if (dx > 0) onCompleteSet();
+    else onSkipExercise();
   }
 
-  // Header color
   const accentColor = dayData?.color || "#e85d26";
+
+  const isLastSet = session.setIdx === TOTAL_SETS - 1;
+  const isLastExercise = session.exerciseIdx === session.exercises.length - 1;
 
   return (
     <div style={{
@@ -179,7 +218,6 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
             {session.exerciseIdx + 1} / {session.exercises.length}
           </div>
         </div>
-
         <ProgressRail current={session.exerciseIdx} total={session.exercises.length} />
       </div>
 
@@ -189,7 +227,6 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
       ) : session.phase === "resting" ? (
         <RestScreen secondsLeft={session.restSecondsLeft} onSkip={onSkipRest} />
       ) : (
-        /* Exercise phase */
         <div
           style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 24px 24px" }}
           onTouchStart={handleTouchStart}
@@ -225,9 +262,18 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
 
             <SetDots completed={session.setIdx} total={TOTAL_SETS} />
 
-            <div style={{ fontSize: 13, color: "var(--muted2)" }}>
-              Set <span style={{ color: "var(--text)", fontWeight: "bold", fontSize: 16 }}>{session.setIdx + 1}</span> of {TOTAL_SETS}
-            </div>
+            {isTimed ? (
+              <>
+                <ExerciseTimer secondsLeft={session.exerciseSecondsLeft} total={timerTotal} />
+                <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 4 }}>
+                  Set <span style={{ color: "var(--text)", fontWeight: "bold", fontSize: 14 }}>{session.setIdx + 1}</span> of {TOTAL_SETS} · hold until zero
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 13, color: "var(--muted2)" }}>
+                Set <span style={{ color: "var(--text)", fontWeight: "bold", fontSize: 16 }}>{session.setIdx + 1}</span> of {TOTAL_SETS}
+              </div>
+            )}
           </div>
 
           {/* Swipe hint */}
@@ -241,19 +287,18 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
             style={{
               width: "100%", padding: "22px 0",
               borderRadius: 16, border: "none",
-              background: session.setIdx === TOTAL_SETS - 1 && session.exerciseIdx === session.exercises.length - 1
-                ? "#4ade80" : "#e85d26",
+              background: isLastSet && isLastExercise ? "#4ade80" : "#e85d26",
               color: "#fff",
               fontSize: 18, fontWeight: "bold", letterSpacing: 1,
               fontFamily: "inherit", cursor: "pointer",
               transition: "background 0.2s",
             }}
           >
-            {session.setIdx === TOTAL_SETS - 1
-              ? session.exerciseIdx === session.exercises.length - 1
-                ? "Finish Workout"
-                : "Done — Next Exercise →"
-              : `Complete Set ${session.setIdx + 1} of ${TOTAL_SETS}`}
+            {isTimed
+              ? (isLastSet && isLastExercise ? "Finish Workout" : "Done Early →")
+              : isLastSet
+                ? isLastExercise ? "Finish Workout" : "Done — Next Exercise →"
+                : `Complete Set ${session.setIdx + 1} of ${TOTAL_SETS}`}
           </button>
 
           {/* Secondary: skip */}

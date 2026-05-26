@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { FiSun, FiMoon } from "react-icons/fi";
 import { useWorkoutSession } from "./workout/useWorkoutSession";
 import ActiveWorkoutView from "./workout/ActiveWorkoutView";
 import ExerciseDemoModal from "./components/ExerciseDemoModal";
+import Toast from "./components/Toast";
 import LibraryTab from "./tabs/LibraryTab";
 import ScheduleTab from "./tabs/ScheduleTab";
 import ProgressTab from "./tabs/ProgressTab";
@@ -10,7 +11,7 @@ import SettingsTab from "./tabs/SettingsTab";
 import { ALL_EXERCISES, AILMENTS, exerciseCategoryMap } from "./data/exercises";
 import {
   weekSchedule, DAY_ABBRS, AGE_RANGES, TARGET_WORKOUTS,
-  DEFAULT_PREFS, PROGRESSION, getThisWeekDates, calcStreak,
+  DEFAULT_PREFS, PROGRESSION, calcStreak,
 } from "./data/schedule";
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
@@ -70,6 +71,8 @@ export default function App() {
   const [completedWorkoutDates, setCompletedWorkoutDates] = useState(() =>
     loadStorage("pt-completed-dates", [])
   );
+  const [toast, setToast] = useState(null);
+  const prevStreakRef = useRef(null);
 
   // ── Workout session ────────────────────────────────────────────────────────
 
@@ -151,6 +154,15 @@ export default function App() {
     setCompleted(p => ({ ...p, [k]: !p[k] }));
   };
 
+  const completeAllSets = (name) => {
+    setCompleted(p => {
+      const next = { ...p };
+      for (let i = 0; i < 3; i++) next[`${todayStr}:${name}-${i}`] = true;
+      return next;
+    });
+    navigator.vibrate?.([20, 50, 20]);
+  };
+
   const toggleAilment = (key) => {
     setPrefs(p => ({
       ...p,
@@ -202,9 +214,19 @@ export default function App() {
   const workoutsCompleted = completedWorkoutDates.length;
   const missionProgress = Math.min(Math.round((workoutsCompleted / TARGET_WORKOUTS) * 100), 100);
   const missionComplete = workoutsCompleted >= TARGET_WORKOUTS;
-  const thisWeekDates = getThisWeekDates();
   const streak = calcStreak(completedWorkoutDates);
   const activeAilments = AILMENTS.filter(a => prefs.ailments.includes(a.key));
+
+  useEffect(() => {
+    const prev = prevStreakRef.current;
+    if (prev !== null && streak.current > prev) {
+      const milestones = [3, 7, 14, 30];
+      if (milestones.includes(streak.current)) {
+        setToast(`${streak.current}-day streak! Keep it up.`);
+      }
+    }
+    prevStreakRef.current = streak.current;
+  }, [streak.current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const inputStyle = {
     width: "100%", boxSizing: "border-box",
@@ -477,7 +499,9 @@ export default function App() {
             expanded={expanded} setExpanded={setExpanded}
             missionStartDate={missionStartDate} weekProg={weekProg}
             hasCaution={hasCaution} toggleSet={toggleSet}
+            completeAllSets={completeAllSets}
             startWorkout={startWorkout} setDemoEx={setDemoEx}
+            prefs={prefs}
           />
         )}
         {activeTab === "progress" && (
@@ -487,7 +511,6 @@ export default function App() {
             workoutsCompleted={workoutsCompleted}
             missionProgress={missionProgress}
             missionDay={missionDay}
-            thisWeekDates={thisWeekDates}
             completedWorkoutDates={completedWorkoutDates}
             activeAilments={activeAilments}
             restartMission={restartMission}
@@ -517,6 +540,9 @@ export default function App() {
 
       {/* Exercise demo modal */}
       <ExerciseDemoModal demoEx={demoEx} setDemoEx={setDemoEx} />
+
+      {/* Toast */}
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   );
 }

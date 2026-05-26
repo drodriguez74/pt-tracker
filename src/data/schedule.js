@@ -32,16 +32,30 @@ export const weekSchedule = [
   { day: "SUN", focus: "Rest",            color: "var(--muted)", cats: [] },
 ];
 
-export function getThisWeekDates() {
+export function getWeekDates(weeksAgo = 0) {
   const today = new Date();
   const dow = today.getDay();
   const monday = new Date(today);
-  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1) - weeksAgo * 7);
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
     return d.toISOString().split("T")[0];
   });
+}
+
+export function getThisWeekDates() {
+  return getWeekDates(0);
+}
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+export function formatWeekLabel(dates) {
+  const s = new Date(dates[0] + "T12:00:00");
+  const e = new Date(dates[6] + "T12:00:00");
+  if (s.getMonth() === e.getMonth()) {
+    return `${MONTHS[s.getMonth()]} ${s.getDate()}–${e.getDate()}`;
+  }
+  return `${MONTHS[s.getMonth()]} ${s.getDate()} – ${MONTHS[e.getMonth()]} ${e.getDate()}`;
 }
 
 export function calcStreak(dates) {

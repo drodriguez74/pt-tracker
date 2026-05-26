@@ -1,19 +1,51 @@
 import { useReducer, useEffect, useRef, useCallback } from "react";
 
-// ─── Reducer ──────────────────────────────────────────────────────────────────
-
 const REST_SECONDS = 60;
+const TOTAL_SETS = 3;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getExerciseSeconds(ex) {
+  if (!ex?.sets) return null;
+  if (ex.sets.includes("/side") || ex.sets.includes("/dir")) return null;
+  const match = ex.sets.match(/x(\d+)s/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+function vibrate(pattern = [10]) {
+  navigator.vibrate?.(pattern);
+}
+
+function playChime(freq = 880, duration = 0.15) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.type = "sine";
+    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (_) {}
+}
+
+// ─── Reducer ──────────────────────────────────────────────────────────────────
 
 function reducer(state, action) {
   switch (action.type) {
     case "START_WORKOUT": {
+      const exercises = action.exercises;
       return {
         ...state,
         phase: "exercise",
-        exercises: action.exercises, // snapshot — never mutates mid-session
+        exercises,
         exerciseIdx: 0,
         setIdx: 0,
         restSecondsLeft: REST_SECONDS,
+        exerciseSecondsLeft: getExerciseSeconds(exercises[0]),
         startedAt: Date.now(),
         skipped: [],
       };
@@ -21,41 +53,56 @@ function reducer(state, action) {
 
     case "COMPLETE_SET": {
       const { exercises, exerciseIdx, setIdx } = state;
-      const totalSets = 3;
-      const isLastSet = setIdx >= totalSets - 1;
+      const isLastSet = setIdx >= TOTAL_SETS - 1;
       const isLastExercise = exerciseIdx >= exercises.length - 1;
 
       if (!isLastSet) {
-        // More sets for current exercise → rest, same exercise, next set
         return { ...state, phase: "resting", restSecondsLeft: REST_SECONDS, setIdx: setIdx + 1 };
       }
       if (!isLastExercise) {
-        // Last set, more exercises → rest, advance exercise, reset set
         return { ...state, phase: "resting", restSecondsLeft: REST_SECONDS, setIdx: 0, exerciseIdx: exerciseIdx + 1 };
       }
-      // Last set of last exercise → done
       return { ...state, phase: "done" };
     }
 
     case "REST_TICK": {
       const next = state.restSecondsLeft - 1;
-      if (next <= 0) return { ...state, phase: "exercise", restSecondsLeft: 0 };
+      if (next <= 0) {
+        return {
+          ...state,
+          phase: "exercise",
+          restSecondsLeft: 0,
+          exerciseSecondsLeft: getExerciseSeconds(state.exercises[state.exerciseIdx]),
+        };
+      }
       return { ...state, restSecondsLeft: next };
     }
 
     case "SKIP_REST":
-      return { ...state, phase: "exercise", restSecondsLeft: 0 };
+      return {
+        ...state,
+        phase: "exercise",
+        restSecondsLeft: 0,
+        exerciseSecondsLeft: getExerciseSeconds(state.exercises[state.exerciseIdx]),
+      };
+
+    case "EXERCISE_TICK": {
+      const next = state.exerciseSecondsLeft - 1;
+      return { ...state, exerciseSecondsLeft: Math.max(0, next) };
+    }
 
     case "SKIP_EXERCISE": {
       const { exercises, exerciseIdx } = state;
       const isLast = exerciseIdx >= exercises.length - 1;
       if (isLast) return { ...state, phase: "done" };
+      const nextIdx = exerciseIdx + 1;
       return {
         ...state,
         phase: "exercise",
-        exerciseIdx: exerciseIdx + 1,
+        exerciseIdx: nextIdx,
         setIdx: 0,
         restSecondsLeft: REST_SECONDS,
+        exerciseSecondsLeft: getExerciseSeconds(exercises[nextIdx]),
         skipped: [...state.skipped, exercises[exerciseIdx].name],
       };
     }
@@ -74,27 +121,10 @@ const initialState = {
   exerciseIdx: 0,
   setIdx: 0,
   restSecondsLeft: REST_SECONDS,
+  exerciseSecondsLeft: null,
   startedAt: null,
   skipped: [],
 };
-
-// ─── Chime ────────────────────────────────────────────────────────────────────
-
-function playChime(freq = 880, duration = 0.15) {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = freq;
-    osc.type = "sine";
-    gain.gain.setValueAtTime(0.4, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration);
-  } catch (_) { /* AudioContext blocked — silent fallback */ }
-}
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -102,39 +132,76 @@ export function useWorkoutSession({ onComplete }) {
   const [session, dispatch] = useReducer(reducer, initialState);
   const wakeLockRef = useRef(null);
   const silentAudioRef = useRef(null);
-  const intervalRef = useRef(null);
+  const restIntervalRef = useRef(null);
+  const exerciseIntervalRef = useRef(null);
 
   // ── Rest timer ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (session.phase !== "resting") return;
-    intervalRef.current = setInterval(() => {
+    restIntervalRef.current = setInterval(() => {
       dispatch({ type: "REST_TICK" });
     }, 1000);
-    return () => clearInterval(intervalRef.current);
-  }, [session.phase, session.restSecondsLeft === REST_SECONDS]); // restart when a new rest period begins
+    return () => clearInterval(restIntervalRef.current);
+  }, [session.phase, session.restSecondsLeft === REST_SECONDS]);
 
-  // Chime at 3s warning and at zero
+  // Rest chimes
   useEffect(() => {
     if (session.phase !== "resting") return;
     if (session.restSecondsLeft === 3) playChime(660, 0.12);
     if (session.restSecondsLeft === 0) playChime(880, 0.2);
   }, [session.restSecondsLeft, session.phase]);
 
-  // Chime when exercise phase starts (coming from rest)
+  // Chime + haptic when rest ends and exercise resumes
   const prevPhase = useRef("idle");
   useEffect(() => {
     if (prevPhase.current === "resting" && session.phase === "exercise") {
       playChime(880, 0.15);
+      vibrate([30, 50, 30]);
     }
     prevPhase.current = session.phase;
   }, [session.phase]);
+
+  // ── Exercise countdown timer ────────────────────────────────────────────────
+  useEffect(() => {
+    if (session.phase !== "exercise" || session.exerciseSecondsLeft === null) {
+      clearInterval(exerciseIntervalRef.current);
+      return;
+    }
+    exerciseIntervalRef.current = setInterval(() => {
+      dispatch({ type: "EXERCISE_TICK" });
+    }, 1000);
+    return () => clearInterval(exerciseIntervalRef.current);
+  // Restart whenever we enter a new exercise or new set
+  }, [session.phase, session.exerciseIdx, session.setIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-complete when exercise timer reaches zero
+  useEffect(() => {
+    if (session.phase !== "exercise" || session.exerciseSecondsLeft !== 0) return;
+    clearInterval(exerciseIntervalRef.current);
+    playChime(880, 0.25);
+    vibrate([40, 30, 40]);
+    dispatch({ type: "COMPLETE_SET" });
+  }, [session.exerciseSecondsLeft, session.phase]);
+
+  // Haptic on manual set completion
+  const prevSetIdx = useRef(0);
+  const prevExIdx = useRef(0);
+  useEffect(() => {
+    if (session.phase === "resting") {
+      if (session.setIdx !== prevSetIdx.current || session.exerciseIdx !== prevExIdx.current) {
+        vibrate([15]);
+      }
+    }
+    prevSetIdx.current = session.setIdx;
+    prevExIdx.current = session.exerciseIdx;
+  }, [session.phase, session.setIdx, session.exerciseIdx]);
 
   // ── Screen Wake Lock ────────────────────────────────────────────────────────
   const acquireWakeLock = useCallback(async () => {
     if (!("wakeLock" in navigator)) return;
     try {
       wakeLockRef.current = await navigator.wakeLock.request("screen");
-    } catch (_) { /* graceful degradation */ }
+    } catch (_) {}
   }, []);
 
   const releaseWakeLock = useCallback(async () => {
@@ -150,10 +217,8 @@ export function useWorkoutSession({ onComplete }) {
     } else {
       releaseWakeLock();
     }
-    return () => {};
   }, [session.phase, acquireWakeLock, releaseWakeLock]);
 
-  // Re-acquire after browser releases on tab background
   useEffect(() => {
     const handler = () => {
       if (document.visibilityState === "visible" &&
@@ -170,7 +235,6 @@ export function useWorkoutSession({ onComplete }) {
     if (!("mediaSession" in navigator)) return;
 
     if (session.phase === "exercise" || session.phase === "resting") {
-      // Keep a silent audio loop alive so Media Session handlers fire
       if (!silentAudioRef.current) {
         const audio = new Audio(
           "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="
@@ -194,9 +258,7 @@ export function useWorkoutSession({ onComplete }) {
 
   // ── Completion callback ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (session.phase === "done") {
-      onComplete(session);
-    }
+    if (session.phase === "done") onComplete(session);
   }, [session.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -204,10 +266,10 @@ export function useWorkoutSession({ onComplete }) {
     dispatch({ type: "START_WORKOUT", exercises: [...exercises] });
   }, []);
 
-  const completeSet = useCallback(() => dispatch({ type: "COMPLETE_SET" }), []);
-  const skipExercise = useCallback(() => dispatch({ type: "SKIP_EXERCISE" }), []);
-  const skipRest = useCallback(() => dispatch({ type: "SKIP_REST" }), []);
-  const endWorkout = useCallback(() => dispatch({ type: "END_WORKOUT" }), []);
+  const completeSet    = useCallback(() => dispatch({ type: "COMPLETE_SET" }), []);
+  const skipExercise   = useCallback(() => { vibrate([10, 40, 10]); dispatch({ type: "SKIP_EXERCISE" }); }, []);
+  const skipRest       = useCallback(() => dispatch({ type: "SKIP_REST" }), []);
+  const endWorkout     = useCallback(() => dispatch({ type: "END_WORKOUT" }), []);
 
   return { session, startWorkout, completeSet, skipExercise, skipRest, endWorkout };
 }

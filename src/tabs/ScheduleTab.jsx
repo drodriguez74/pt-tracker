@@ -1,14 +1,38 @@
+import { useRef } from "react";
 import { GiMeditation } from "react-icons/gi";
 import { ALL_EXERCISES, WARMUP_PRESETS } from "../data/exercises";
 import { weekSchedule, DAY_ABBRS } from "../data/schedule";
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
 
 export default function ScheduleTab({
   selectedDay, setSelectedDay,
   dayData, dayExercises, dayDone,
   todayStr, completed, expanded, setExpanded,
   missionStartDate, weekProg,
-  hasCaution, toggleSet, startWorkout, setDemoEx,
+  hasCaution, toggleSet, completeAllSets, startWorkout, setDemoEx,
+  prefs,
 }) {
+  const isToday = selectedDay === DAY_ABBRS[new Date().getDay()];
+  const lpTimer = useRef(null);
+  const lpFired = useRef(false);
+
+  function startLongPress(ex) {
+    lpFired.current = false;
+    lpTimer.current = setTimeout(() => {
+      lpFired.current = true;
+      completeAllSets(ex.name);
+    }, 600);
+  }
+  function cancelLongPress() {
+    clearTimeout(lpTimer.current);
+  }
+
   return (
     <>
       {/* Day selector */}
@@ -26,6 +50,17 @@ export default function ScheduleTab({
           </button>
         ))}
       </div>
+
+      {/* Personalized greeting — today only */}
+      {isToday && dayExercises.length > 0 && (
+        <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 10, letterSpacing: 0.3 }}>
+          {getGreeting()}{prefs?.name ? `, ${prefs.name}` : ""}. Today is{" "}
+          <span style={{ color: dayData?.color, fontWeight: "bold" }}>{dayData?.focus}</span>
+          {missionStartDate && weekProg && (
+            <span> · <span style={{ color: "var(--muted2)" }}>{weekProg.label}</span></span>
+          )}.
+        </div>
+      )}
 
       {/* Day header */}
       <div style={{
@@ -50,8 +85,8 @@ export default function ScheduleTab({
         )}
       </div>
 
-      {/* Start Workout button — only shown for today's training day */}
-      {dayExercises.length > 0 && selectedDay === DAY_ABBRS[new Date().getDay()] && (
+      {/* Start Workout button — today's training days only */}
+      {dayExercises.length > 0 && isToday && (
         <button
           onClick={() => startWorkout(dayExercises)}
           style={{
@@ -100,6 +135,13 @@ export default function ScheduleTab({
         </div>
       )}
 
+      {/* Long-press hint — today only */}
+      {isToday && dayExercises.length > 0 && dayDone < dayExercises.length && (
+        <div style={{ fontSize: 10, color: "var(--muted3)", textAlign: "center", marginBottom: 10, letterSpacing: 0.5 }}>
+          Hold an exercise card to mark all 3 sets complete
+        </div>
+      )}
+
       {/* Exercise list or rest day */}
       {dayExercises.length === 0 ? (
         <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--muted3)" }}>
@@ -113,12 +155,19 @@ export default function ScheduleTab({
           const isExp = expanded === ex.name;
           const warn = hasCaution(ex);
           return (
-            <div key={idx} style={{
-              background: allDone ? "var(--success-surface)" : warn ? "var(--warn-surface)" : "var(--surface)",
-              border: `1px solid ${allDone ? "var(--done-border)" : warn ? "#f59e0b44" : "var(--border)"}`,
-              borderRadius: 11, marginBottom: 8, overflow: "hidden",
-            }}>
-              <div onClick={() => setExpanded(isExp ? null : ex.name)} style={{
+            <div
+              key={idx}
+              onTouchStart={() => isToday && !allDone && startLongPress(ex)}
+              onTouchEnd={cancelLongPress}
+              onTouchMove={cancelLongPress}
+              style={{
+                background: allDone ? "var(--success-surface)" : warn ? "var(--warn-surface)" : "var(--surface)",
+                border: `1px solid ${allDone ? "var(--done-border)" : warn ? "#f59e0b44" : "var(--border)"}`,
+                borderRadius: 11, marginBottom: 8, overflow: "hidden",
+                userSelect: "none",
+              }}
+            >
+              <div onClick={() => { if (!lpFired.current) setExpanded(isExp ? null : ex.name); }} style={{
                 padding: "13px 15px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer",
               }}>
                 <div style={{ flex: 1 }}>
