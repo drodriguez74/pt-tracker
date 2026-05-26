@@ -1,146 +1,503 @@
-import { CatIcon } from "../components/CatIcon";
-import { categories } from "../data/exercises";
-import { weekSchedule, TARGET_WORKOUTS, getWeekDates, formatWeekLabel } from "../data/schedule";
+import { useState, useEffect, useMemo } from "react";
+import { weekSchedule, DAY_ABBRS, TARGET_WORKOUTS } from "../data/schedule";
 
-const HISTORY_WEEKS = 4;
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+const CAT_TO_AXIS = {
+  pushVariations: "Push", dipsTriCeps: "Push",
+  pullVariations: "Pull", back: "Pull",
+  lowerBody: "Legs",
+  core: "Core",
+  cardioConditioning: "Cardio",
+  mobilityWarmup: "Mobility",
+};
+const RADAR_AXES = ["Push", "Pull", "Legs", "Core", "Cardio", "Mobility"];
+const HEAT_WEEKS = 16;
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function toISO(d) {
+  return d.toISOString().split("T")[0];
+}
+
+function computeRadarScores(completedDates) {
+  const scores = Object.fromEntries(RADAR_AXES.map(l => [l, 0]));
+  for (const dateStr of completedDates) {
+    const d = new Date(dateStr + "T12:00:00");
+    const abbr = DAY_ABBRS[d.getDay()];
+    const day = weekSchedule.find(w => w.day === abbr);
+    if (!day) continue;
+    for (const cat of day.cats) {
+      const axis = CAT_TO_AXIS[cat];
+      if (axis) scores[axis]++;
+    }
+  }
+  return scores;
+}
+
+// ── Mission Ring ───────────────────────────────────────────────────────────────
+
+function MissionRing({ current, total, complete }) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setOn(true), 200);
+    return () => clearTimeout(t);
+  }, []);
+
+  const r = 70;
+  const cx = 88;
+  const cy = 88;
+  const circ = 2 * Math.PI * r;
+  const pct = on ? Math.min(current / total, 1) : 0;
+  const color = complete ? "#4ade80" : "#e85d26";
+  const tickAngles = [5, 10, 15].map(n => (n / total) * 2 * Math.PI);
+
+  return (
+    <div style={{ position: "relative", width: 176, height: 176, flexShrink: 0 }}>
+      <svg
+        width="176" height="176"
+        style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}
+      >
+        <defs>
+          <filter id="ring-glow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="4" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+
+        {/* Track */}
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e85d2612" strokeWidth="10" />
+
+        {/* Milestone ticks at 5, 10, 15 */}
+        {tickAngles.map((a, i) => (
+          <line
+            key={i}
+            x1={cx + (r - 7) * Math.cos(a)} y1={cy + (r - 7) * Math.sin(a)}
+            x2={cx + (r + 3) * Math.cos(a)} y2={cy + (r + 3) * Math.sin(a)}
+            stroke="#e85d2650" strokeWidth="1.5"
+          />
+        ))}
+
+        {/* Progress arc */}
+        <circle
+          cx={cx} cy={cy} r={r}
+          fill="none" stroke={color} strokeWidth="10"
+          strokeDasharray={circ}
+          strokeDashoffset={circ * (1 - pct)}
+          strokeLinecap="round"
+          filter="url(#ring-glow)"
+          style={{ transition: "stroke-dashoffset 1.4s cubic-bezier(0.16,1,0.3,1), stroke 0.4s" }}
+        />
+      </svg>
+
+      {/* Center label */}
+      <div style={{
+        position: "absolute", inset: 0,
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        textAlign: "center", gap: 1,
+      }}>
+        {complete ? (
+          <>
+            <div style={{ fontSize: 30 }}>🎖️</div>
+            <div style={{ fontSize: 8, color: "#4ade80", letterSpacing: 3, textTransform: "uppercase", marginTop: 4 }}>Complete</div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase" }}>Mission</div>
+            <div style={{ fontSize: 40, fontWeight: 900, lineHeight: 1, color }}>{current}</div>
+            <div style={{ fontSize: 10, color: "var(--muted)" }}>/ {total}</div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Radar Chart ────────────────────────────────────────────────────────────────
+
+function RadarChart({ scores }) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setOn(true), 500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const size = 220;
+  const cx = size / 2;
+  const cy = size / 2;
+  const R = 76;
+  const N = RADAR_AXES.length;
+  const maxVal = Math.max(...Object.values(scores), 1);
+
+  const angle = i => -Math.PI / 2 + (2 * Math.PI / N) * i;
+
+  const pt = (r, i) => ({
+    x: cx + r * Math.cos(angle(i)),
+    y: cy + r * Math.sin(angle(i)),
+  });
+
+  const polyStr = pts => pts.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+
+  const gridRing = r => polyStr(RADAR_AXES.map((_, i) => pt(r, i)));
+
+  const dataPoints = RADAR_AXES.map((label, i) =>
+    pt(R * (scores[label] / maxVal), i)
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+      <svg width={size} height={size} style={{ overflow: "visible" }}>
+        <defs>
+          <filter id="rdot-glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="rfill-glow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="8" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+
+        {/* Grid rings */}
+        {[0.25, 0.5, 0.75, 1].map(r => (
+          <polygon key={r} points={gridRing(R * r)} fill="none" stroke="#e85d2614" strokeWidth="1" />
+        ))}
+
+        {/* Spokes */}
+        {RADAR_AXES.map((_, i) => {
+          const p = pt(R, i);
+          return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#e85d2220" strokeWidth="1" />;
+        })}
+
+        {/* Data shape — scale from center */}
+        <g style={{
+          transformOrigin: `${cx}px ${cy}px`,
+          transform: `scale(${on ? 1 : 0.05})`,
+          opacity: on ? 1 : 0,
+          transition: "transform 1s cubic-bezier(0.16,1,0.3,1), opacity 0.5s",
+        }}>
+          {/* Glow halo */}
+          <polygon
+            points={polyStr(dataPoints)}
+            fill="#e85d2645" stroke="none"
+            filter="url(#rfill-glow)"
+          />
+          {/* Main polygon */}
+          <polygon
+            points={polyStr(dataPoints)}
+            fill="#e85d2620" stroke="#e85d26" strokeWidth="2" strokeLinejoin="round"
+          />
+          {/* Vertex dots */}
+          {dataPoints.map((p, i) =>
+            scores[RADAR_AXES[i]] > 0 && (
+              <circle key={i} cx={p.x} cy={p.y} r="4" fill="#e85d26" filter="url(#rdot-glow)" />
+            )
+          )}
+        </g>
+
+        {/* Axis labels */}
+        {RADAR_AXES.map((label, i) => {
+          const lp = pt(R + 22, i);
+          const active = scores[label] > 0;
+          return (
+            <text
+              key={i}
+              x={lp.x} y={lp.y + 4}
+              textAnchor="middle"
+              style={{
+                fontSize: 9,
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                letterSpacing: 1,
+                fill: active ? "#e85d26" : "var(--muted3)",
+              }}
+            >
+              {label.toUpperCase()}
+            </text>
+          );
+        })}
+      </svg>
+
+      {/* Score row */}
+      <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 6, flexWrap: "wrap" }}>
+        {RADAR_AXES.map(label => (
+          <div key={label} style={{ textAlign: "center", minWidth: 38 }}>
+            <div style={{
+              fontSize: 15, fontWeight: 900, lineHeight: 1,
+              color: scores[label] > 0 ? "#e85d26" : "var(--muted3)",
+            }}>
+              {scores[label]}
+            </div>
+            <div style={{ fontSize: 7, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>
+              {label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Heat Grid ──────────────────────────────────────────────────────────────────
+
+function HeatGrid({ completedDates }) {
+  const todayStr = toISO(new Date());
+
+  const grid = useMemo(() => {
+    const today = new Date();
+    const dow = today.getDay();
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1) - (HEAT_WEEKS - 1) * 7);
+
+    return Array.from({ length: HEAT_WEEKS }, (_, w) =>
+      Array.from({ length: 7 }, (_, d) => {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + w * 7 + d);
+        const dateStr = toISO(date);
+        const abbr = DAY_ABBRS[date.getDay()];
+        const dayData = weekSchedule.find(x => x.day === abbr);
+        const isTraining = dayData && dayData.cats.length > 0;
+        const isDone = completedDates.includes(dateStr);
+        const isFuture = dateStr > todayStr;
+        return { dateStr, isTraining, isDone, isFuture, date };
+      })
+    );
+  }, [completedDates]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const CELL = 16;
+  const GAP = 3;
+
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <div style={{ display: "flex", gap: GAP, minWidth: "fit-content" }}>
+
+        {/* Day label column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: GAP, paddingTop: 18 }}>
+          {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+            <div key={i} style={{
+              width: 8, height: CELL, fontSize: 7,
+              color: "var(--muted3)", fontFamily: "monospace",
+              display: "flex", alignItems: "center", justifyContent: "flex-end",
+            }}>
+              {[0, 2, 4].includes(i) ? d : ""}
+            </div>
+          ))}
+        </div>
+
+        {/* Week columns */}
+        {grid.map((week, wi) => {
+          const firstDate = week[0].date;
+          const showMonth = wi === 0 || firstDate.getDate() <= 7;
+          return (
+            <div key={wi} style={{ display: "flex", flexDirection: "column", gap: GAP }}>
+              {/* Month label */}
+              <div style={{ height: 14, overflow: "visible" }}>
+                {showMonth && (
+                  <span style={{
+                    fontSize: 7, color: "var(--muted3)",
+                    fontFamily: "monospace", whiteSpace: "nowrap",
+                  }}>
+                    {firstDate.toLocaleDateString("en", { month: "short" })}
+                  </span>
+                )}
+              </div>
+
+              {/* Day cells */}
+              {week.map((cell, di) => {
+                let bg, border, shadow;
+                if (cell.isFuture) {
+                  bg = "transparent"; border = "1px solid transparent"; shadow = "none";
+                } else if (cell.isDone) {
+                  bg = "#e85d26"; border = "none"; shadow = "0 0 7px #e85d2670";
+                } else if (cell.isTraining) {
+                  bg = "#e85d2615"; border = "1px solid #e85d2630"; shadow = "none";
+                } else {
+                  bg = "#ffffff05"; border = "1px solid #ffffff08"; shadow = "none";
+                }
+                return (
+                  <div
+                    key={di}
+                    title={cell.dateStr}
+                    style={{
+                      width: CELL, height: CELL, borderRadius: 3,
+                      background: bg, border, boxShadow: shadow,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: "flex", gap: 14, marginTop: 12, justifyContent: "flex-end", alignItems: "center" }}>
+        {[
+          { bg: "#e85d26", shadow: "0 0 6px #e85d2660", label: "Completed" },
+          { bg: "#e85d2615", border: "1px solid #e85d2630", label: "Scheduled" },
+          { bg: "#ffffff05", border: "1px solid #ffffff08", label: "Rest" },
+        ].map(({ bg, border, shadow, label }) => (
+          <div key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: bg, border, boxShadow: shadow }} />
+            <span style={{ fontSize: 8, color: "var(--muted3)", letterSpacing: 0.5 }}>{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────────
 
 export default function ProgressTab({
   streak, missionComplete, workoutsCompleted, missionProgress, missionDay,
   completedWorkoutDates, activeAilments,
   restartMission, setActiveTab,
 }) {
+  const radarScores = useMemo(
+    () => computeRadarScores(completedWorkoutDates),
+    [completedWorkoutDates]
+  );
+
   return (
     <>
-      {/* Streak cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+      {/* ── Mission ring + streak ── */}
+      <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 20 }}>
+        <MissionRing current={workoutsCompleted} total={TARGET_WORKOUTS} complete={missionComplete} />
+
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Current streak */}
+          <div style={{
+            background: streak.current > 0 ? "var(--mission-surface)" : "var(--surface)",
+            border: `1px solid ${streak.current > 0 ? "#e85d2640" : "var(--border)"}`,
+            borderRadius: 11, padding: "11px 13px",
+          }}>
+            <div style={{ fontSize: 8, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 3 }}>
+              Streak
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+              <span style={{
+                fontSize: 34, fontWeight: 900, lineHeight: 1,
+                color: streak.current > 0 ? "#e85d26" : "var(--muted)",
+              }}>
+                {streak.current}
+              </span>
+              <span style={{ fontSize: 10, color: "var(--muted)" }}>
+                {streak.current === 1 ? "day" : "days"}
+              </span>
+            </div>
+          </div>
+
+          {/* Best + Total */}
+          <div style={{ display: "flex", gap: 6 }}>
+            {[
+              { label: "Best",  value: streak.best,  color: "#8b5cf6" },
+              { label: "Total", value: streak.total, color: "#10b981" },
+            ].map(s => (
+              <div key={s.label} style={{
+                flex: 1, background: "var(--surface)",
+                border: "1px solid var(--border)", borderRadius: 11, padding: "9px 11px",
+              }}>
+                <div style={{ fontSize: 7, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>
+                  {s.label}
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 900, color: s.color }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {missionComplete && (
+            <button onClick={restartMission} style={{
+              padding: "9px 0", borderRadius: 9,
+              border: "1px solid #4ade8055", background: "var(--success-surface)",
+              color: "#4ade80", fontSize: 11, fontFamily: "inherit",
+              cursor: "pointer", letterSpacing: 1,
+            }}>
+              Start Mission 2 →
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Training log heat map ── */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
+          Training Log · 16 Weeks
+        </div>
+        <div style={{
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: 13, padding: "14px 16px",
+        }}>
+          <HeatGrid completedDates={completedWorkoutDates} />
+        </div>
+      </div>
+
+      {/* ── Muscle balance radar ── */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
+          Muscle Group Balance
+        </div>
+        <div style={{
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: 13, padding: "20px 16px", display: "flex", justifyContent: "center",
+        }}>
+          {completedWorkoutDates.length === 0 ? (
+            <div style={{ fontSize: 12, color: "var(--muted3)", padding: "36px 0", textAlign: "center" }}>
+              Complete your first workout to see balance data.
+            </div>
+          ) : (
+            <RadarChart scores={radarScores} />
+          )}
+        </div>
+      </div>
+
+      {/* ── Milestones ── */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
+          Milestones
+        </div>
         {[
-          { label: "Current Streak", value: streak.current, unit: streak.current === 1 ? "day" : "days", color: streak.current > 0 ? "#e85d26" : "var(--muted)" },
-          { label: "Best Streak",    value: streak.best,    unit: streak.best === 1 ? "day" : "days",    color: "#8b5cf6" },
-          { label: "Total Workouts", value: streak.total,   unit: "done",                                color: "#10b981" },
-        ].map((s, i) => (
-          <div key={i} style={{ background: "var(--surface)", border: `1px solid ${s.color}33`, borderRadius: 11, padding: "12px 10px", textAlign: "center" }}>
-            <div style={{ fontSize: 22, fontWeight: "bold", color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 2, letterSpacing: 0.5 }}>{s.unit}</div>
-            <div style={{ fontSize: 9, color: "var(--muted2)", marginTop: 3, letterSpacing: 0.5, textTransform: "uppercase" }}>{s.label}</div>
+          { label: "Week 1–2", goal: "Build the habit, muscles adapt",           icon: "🌱", done: streak.total >= 4  },
+          { label: "Week 3",   goal: "Noticeable strength in push-ups & squats", icon: "💪", done: streak.total >= 10 },
+          { label: "Week 4",   goal: "Core stronger, posture visibly improved",  icon: "🎯", done: streak.total >= 16 },
+        ].map((m, i) => (
+          <div key={i} style={{
+            background: m.done ? "var(--success-surface)" : "var(--surface)",
+            border: `1px solid ${m.done ? "var(--done-border)" : "var(--border)"}`,
+            borderRadius: 11, padding: "12px 15px", marginBottom: 8,
+            display: "flex", alignItems: "center", gap: 12,
+          }}>
+            <span style={{ fontSize: 20, opacity: m.done ? 1 : 0.35 }}>{m.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 9, color: m.done ? "#4ade80" : "#e85d26", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>
+                {m.label}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--muted)", textDecoration: m.done ? "line-through" : "none" }}>
+                {m.goal}
+              </div>
+            </div>
+            {m.done && <span style={{ fontSize: 14, color: "#4ade80" }}>✓</span>}
           </div>
         ))}
       </div>
 
-      {/* Mission card */}
-      {missionComplete ? (
-        <div style={{
-          background: "linear-gradient(135deg, var(--complete-surface), var(--bg))",
-          border: "1px solid #4ade8044", borderRadius: 14,
-          padding: "20px", marginBottom: 14, textAlign: "center",
-        }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>🎖️</div>
-          <div style={{ fontSize: 10, color: "#4ade80", letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>Mission Complete</div>
-          <div style={{ fontSize: 22, fontWeight: "bold" }}>30-Day Mission</div>
-          <div style={{ fontSize: 13, color: "var(--muted3)", marginTop: 4 }}>You completed {workoutsCompleted} workouts.</div>
-          <button
-            onClick={restartMission}
-            style={{
-              marginTop: 16, padding: "10px 24px", borderRadius: 20,
-              border: "1px solid #4ade80", background: "var(--success-surface2)",
-              color: "#4ade80", fontSize: 13, fontFamily: "inherit", cursor: "pointer",
-            }}
-          >
-            Start Mission 2 →
-          </button>
-        </div>
-      ) : (
-        <div style={{
-          background: "linear-gradient(135deg, var(--mission-surface), var(--bg))",
-          border: "1px solid #e85d2644", borderRadius: 14,
-          padding: "20px", marginBottom: 14, textAlign: "center",
-        }}>
-          <div style={{ fontSize: 10, color: "#e85d26", letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>30-Day Mission</div>
-          <div style={{ fontSize: 44, fontWeight: "bold" }}>{workoutsCompleted}</div>
-          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>of {TARGET_WORKOUTS} workouts</div>
-          <div style={{ marginTop: 14, height: 6, background: "var(--surface3)", borderRadius: 3, overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${missionProgress}%`, background: "#e85d26", borderRadius: 3, transition: "width 0.4s ease" }} />
-          </div>
-          <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 6 }}>
-            {missionProgress}% complete · Calendar day {missionDay}
-          </div>
-        </div>
-      )}
-
-      {/* Workout history — 4 weeks */}
-      {Array.from({ length: HISTORY_WEEKS }, (_, w) => {
-        const dates = getWeekDates(w);
-        const label = w === 0 ? "This Week" : formatWeekLabel(dates);
-        const weekDone = weekSchedule.filter((d, i) => d.cats.length > 0 && completedWorkoutDates.includes(dates[i])).length;
-        const weekTotal = weekSchedule.filter(d => d.cats.length > 0).length;
-        return (
-          <div key={w} style={{ marginBottom: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase" }}>{label}</div>
-              {weekDone > 0 && (
-                <div style={{ fontSize: 10, color: "#e85d26", letterSpacing: 1 }}>{weekDone}/{weekTotal} workouts</div>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: 5 }}>
-              {weekSchedule.map((d, i) => {
-                const dateStr = dates[i];
-                const isDone = completedWorkoutDates.includes(dateStr);
-                const isRest = d.cats.length === 0;
-                return (
-                  <div key={d.day} style={{
-                    flex: 1, textAlign: "center", background: "var(--surface)",
-                    border: `1px solid ${isDone ? d.color + "66" : isRest ? "var(--border-subtle)" : "var(--border)"}`,
-                    borderRadius: 9, padding: "9px 0",
-                  }}>
-                    <div style={{ fontSize: 9, color: isDone ? d.color : "var(--muted)", letterSpacing: 1 }}>{d.day}</div>
-                    <div style={{ fontSize: 16, marginTop: 5 }}>
-                      {isRest ? "😴" : isDone ? "✅" : "⬜"}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Library stats */}
-      <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Exercise Library</div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
-        {categories.map(cat => (
-          <div key={cat.key} style={{ background: "var(--surface)", border: `1px solid ${cat.color}33`, borderRadius: 11, padding: "14px", textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center" }}><CatIcon icon={cat.icon} size={20} color={cat.color} /></div>
-            <div style={{ fontSize: 22, fontWeight: "bold", color: cat.color, marginTop: 4 }}>{cat.exercises.length}</div>
-            <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>{cat.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Milestones */}
-      <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Milestones</div>
-      {[
-        { week: "Week 1–2", goal: "Build the habit, muscles adapt", icon: "🌱" },
-        { week: "Week 3",   goal: "Noticeable strength in push-ups & squats", icon: "💪" },
-        { week: "Week 4",   goal: "Core stronger, posture visibly improved", icon: "🎯" },
-      ].map((m, i) => (
-        <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 11, padding: "13px 15px", marginBottom: 8, display: "flex", alignItems: "center", gap: 13 }}>
-          <span style={{ fontSize: 26 }}>{m.icon}</span>
-          <div>
-            <div style={{ fontSize: 12, color: "#e85d26", marginBottom: 3, letterSpacing: 1 }}>{m.week}</div>
-            <div style={{ fontSize: 13 }}>{m.goal}</div>
-          </div>
-        </div>
-      ))}
-
-      {/* Active ailment modifications */}
+      {/* ── Ailment modifications ── */}
       {activeAilments.length > 0 && (
         <>
-          <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, marginTop: 18 }}>Your Modifications</div>
-          {activeAilments.map((a) => (
-            <div key={a.key} style={{ background: "var(--surface)", border: "1px solid var(--caution-border)", borderRadius: 11, padding: "12px 15px", marginBottom: 8, display: "flex", gap: 12, alignItems: "center" }}>
-              <span style={{ fontSize: 20 }}>⚠️</span>
+          <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
+            Your Modifications
+          </div>
+          {activeAilments.map(a => (
+            <div key={a.key} style={{
+              background: "var(--surface)", border: "1px solid var(--caution-border)",
+              borderRadius: 11, padding: "12px 15px", marginBottom: 8,
+              display: "flex", gap: 12, alignItems: "center",
+            }}>
+              <span style={{ fontSize: 18 }}>⚠️</span>
               <div>
-                <div style={{ fontSize: 12, color: "#f59e0b", marginBottom: 3 }}>{a.label}</div>
-                <div style={{ fontSize: 12, color: "var(--muted3)" }}>{a.note}</div>
+                <div style={{ fontSize: 11, color: "#f59e0b", marginBottom: 2 }}>{a.label}</div>
+                <div style={{ fontSize: 11, color: "var(--muted3)" }}>{a.note}</div>
               </div>
             </div>
           ))}
@@ -148,7 +505,11 @@ export default function ProgressTab({
       )}
 
       {activeAilments.length === 0 && (
-        <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 11, padding: "16px", marginTop: 18, textAlign: "center", color: "var(--muted2)", fontSize: 12 }}>
+        <div style={{
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: 11, padding: "14px", textAlign: "center",
+          color: "var(--muted2)", fontSize: 12,
+        }}>
           No modifications set.{" "}
           <span onClick={() => setActiveTab("settings")} style={{ color: "#e85d26", cursor: "pointer" }}>
             Add ailments in Settings →
