@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { GiMeditation } from "react-icons/gi";
 import { ALL_EXERCISES, WARMUP_PRESETS } from "../data/exercises";
 import { weekSchedule, DAY_ABBRS, getThisWeekDates } from "../data/schedule";
@@ -23,6 +23,17 @@ export default function ScheduleTab({
   const thisWeekDates = getThisWeekDates();
   const lpTimer = useRef(null);
   const lpFired = useRef(false);
+  const [justCompleted, setJustCompleted] = useState(null);
+
+  function handleSetTap(exName, i) {
+    const othersDone = [0, 1, 2].filter(j => j !== i && !!completed[`${todayStr}:${exName}-${j}`]).length;
+    if (othersDone === 2 && !completed[`${todayStr}:${exName}-${i}`]) {
+      setJustCompleted(exName);
+      navigator.vibrate?.([15, 40, 60]);
+      setTimeout(() => setJustCompleted(null), 700);
+    }
+    toggleSet(exName, i);
+  }
 
   function startLongPress(ex) {
     lpFired.current = false;
@@ -218,11 +229,51 @@ export default function ScheduleTab({
 
       {/* ── Exercise list or rest day ── */}
       {dayExercises.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--muted3)" }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>😴</div>
-          <div style={{ fontSize: 17 }}>Rest Day</div>
-          <div style={{ fontSize: 12, marginTop: 6, color: "var(--muted2)" }}>
-            Light walk or 10 min mobility recommended.
+        <div>
+          <div style={{
+            background: "var(--info-surface)", border: "1px solid #10b98133",
+            borderRadius: 13, padding: "16px 18px", marginBottom: 12,
+            display: "flex", alignItems: "center", gap: 12,
+          }}>
+            <div style={{ fontSize: 32 }}>😴</div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: "bold", marginBottom: 3 }}>Rest Day</div>
+              <div style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>
+                Active recovery only. Light movement helps adaptation.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ fontSize: 9, color: "#10b981", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
+            Recommended Mobility — 5–10 min
+          </div>
+
+          {[
+            { name: "Cat-Cow",                       sets: "2×10",       notes: "Spinal decompression — essential" },
+            { name: "Child's Pose",                  sets: "2×20s",      notes: "Lower back release" },
+            { name: "Hip Circle (standing)",         sets: "2×10/dir",   notes: "Hip joint mobility" },
+            { name: "Arm Circles (forward & back)",  sets: "2×10/dir",   notes: "Shoulder warm-down" },
+            { name: "Thread the Needle",             sets: "2×20s/side", notes: "Thoracic rotation" },
+          ].map((item, idx) => (
+            <div key={idx} style={{
+              background: "var(--surface)", border: "1px solid var(--border)",
+              borderLeft: "3px solid #10b981",
+              borderRadius: 11, padding: "12px 14px", marginBottom: 8,
+            }}>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: "var(--text)", marginBottom: 5 }}>{item.name}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{
+                  background: "var(--surface3)", border: "1px solid var(--border3)",
+                  borderRadius: 5, padding: "2px 8px",
+                  fontSize: 11, fontWeight: "bold", color: "#10b981", flexShrink: 0,
+                }}>{item.sets}</span>
+                <span style={{ fontSize: 11, color: "var(--muted)" }}>{item.notes}</span>
+              </div>
+            </div>
+          ))}
+
+          <div style={{ textAlign: "center", padding: "12px 0 4px", fontSize: 11, color: "var(--muted3)" }}>
+            Or a 10-min walk counts. See you tomorrow.
           </div>
         </div>
       ) : (
@@ -243,6 +294,7 @@ export default function ScheduleTab({
                 borderLeft: `3px solid ${allDone ? "#4ade80" : warn ? "#f59e0b" : dayData?.color || "var(--border)"}`,
                 borderRadius: 11, marginBottom: 8, padding: "13px 14px",
                 cursor: "pointer", userSelect: "none",
+                animation: justCompleted === ex.name ? "completePop 0.5s ease" : "none",
               }}
             >
               {/* Name row */}
@@ -279,7 +331,7 @@ export default function ScheduleTab({
                       return (
                         <div
                           key={i}
-                          onClick={() => toggleSet(ex.name, i)}
+                          onClick={() => handleSetTap(ex.name, i)}
                           style={{
                             width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
                             display: "flex", alignItems: "center", justifyContent: "center",

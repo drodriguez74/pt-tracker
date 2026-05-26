@@ -17,15 +17,24 @@ export default function ExerciseDemoModal({ demoEx, setDemoEx }) {
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "20px 20px 0 0", padding: "22px 20px 36px", width: "100%", maxWidth: 480, maxHeight: "82vh", overflowY: "auto" }}
+        style={{
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderTop: `3px solid ${catColor}`,
+          borderRadius: "20px 20px 0 0", padding: "16px 20px 36px",
+          width: "100%", maxWidth: 480, maxHeight: "82vh", overflowY: "auto",
+          animation: "slideUp 0.28s ease",
+        }}
       >
+        {/* Drag handle */}
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: "var(--border3)", margin: "0 auto 18px" }} />
+
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
           <div style={{ flex: 1, paddingRight: 12 }}>
-            <div style={{ fontSize: 9, color: catColor, letterSpacing: 3, textTransform: "uppercase", marginBottom: 5 }}>
-              <CatIcon icon={ALL_EXERCISES[catKey]?.icon} size={12} color={catColor} style={{ verticalAlign: "middle", marginRight: 4 }} />{ALL_EXERCISES[catKey]?.label}
+            <div style={{ fontSize: 9, color: catColor, letterSpacing: 3, textTransform: "uppercase", marginBottom: 5, display: "flex", alignItems: "center", gap: 5 }}>
+              <CatIcon icon={ALL_EXERCISES[catKey]?.icon} size={12} color={catColor} />{ALL_EXERCISES[catKey]?.label}
             </div>
-            <div style={{ fontSize: 18, fontWeight: "bold", lineHeight: 1.2 }}>{demoEx.name}</div>
+            <div style={{ fontSize: 20, fontWeight: "bold", lineHeight: 1.2 }}>{demoEx.name}</div>
             <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>{demoEx.sets} · {demoEx.notes}</div>
           </div>
           <button
@@ -33,6 +42,16 @@ export default function ExerciseDemoModal({ demoEx, setDemoEx }) {
             style={{ background: "var(--surface3)", border: "1px solid var(--border2)", borderRadius: 8, width: 32, height: 32, color: "var(--muted3)", fontSize: 16, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
           >✕</button>
         </div>
+
+        {/* Caution callout */}
+        {demoEx.caution?.length > 0 && (
+          <div style={{ background: "var(--warn-surface)", border: "1px solid #f59e0b33", borderRadius: 10, padding: "10px 14px", marginBottom: 16 }}>
+            <div style={{ fontSize: 9, color: "#f59e0b", letterSpacing: 3, textTransform: "uppercase", marginBottom: 5 }}>Caution</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
+              May need modification if you have <span style={{ color: "#f59e0b" }}>{demoEx.caution.join(" or ")} issues</span>. See safer options below.
+            </div>
+          </div>
+        )}
 
         {/* Steps */}
         {demo?.steps.map((step, i) => (

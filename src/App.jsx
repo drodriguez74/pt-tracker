@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { FiSun, FiMoon } from "react-icons/fi";
+import { FiSun, FiMoon, FiBook, FiCalendar, FiTrendingUp, FiSettings } from "react-icons/fi";
 import { useWorkoutSession } from "./workout/useWorkoutSession";
 import ActiveWorkoutView from "./workout/ActiveWorkoutView";
 import ExerciseDemoModal from "./components/ExerciseDemoModal";
@@ -431,54 +431,29 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: "'Barlow Condensed', sans-serif", maxWidth: 480, margin: "0 auto" }}>
 
       {/* ── Header ── */}
-      <div style={{ background: "var(--header-bg)", borderBottom: "1px solid var(--border)", padding: "20px 18px 14px", position: "sticky", top: 0, zIndex: 20 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+      <div style={{ background: "var(--header-bg)", borderBottom: "1px solid var(--border)", padding: "14px 18px", position: "sticky", top: 0, zIndex: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             {prefs.name && (
-              <div style={{ fontSize: 10, letterSpacing: 4, color: "#e85d26", textTransform: "uppercase", marginBottom: 3 }}>
+              <div style={{ fontSize: 9, letterSpacing: 4, color: "#e85d26", textTransform: "uppercase", marginBottom: 2 }}>
                 🪖 {prefs.name}
               </div>
             )}
-            <div style={{ fontSize: 22, fontWeight: "bold", letterSpacing: -0.5 }}>Military Calisthenics</div>
+            <div style={{ fontSize: 20, fontWeight: "bold", letterSpacing: -0.3, lineHeight: 1 }}>Military Calisthenics</div>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-            <button
-              onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
-              title="Toggle theme"
-              style={{
-                background: "var(--surface2)", border: "1px solid var(--border2)",
-                borderRadius: 10, width: 36, height: 36,
-                cursor: "pointer", flexShrink: 0,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "var(--muted)",
-              }}
-            >{theme === "dark" ? <FiSun size={16} /> : <FiMoon size={16} />}</button>
-            <div style={{ textAlign: "right", background: "var(--surface2)", border: "1px solid var(--border2)", borderRadius: 10, padding: "8px 12px" }}>
-              <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 1 }}>EXERCISES</div>
-              <div style={{ fontSize: 22, fontWeight: "bold", color: "#e85d26" }}>{totalExercises}</div>
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 5 }}>
-          {[
-            { key: "library",  label: "Library" },
-            { key: "schedule", label: "Schedule" },
-            { key: "progress", label: "Progress" },
-            { key: "settings", label: "Settings" },
-          ].map(t => (
-            <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
-              flex: 1, padding: "7px 0", borderRadius: 7, border: "1px solid",
-              borderColor: activeTab === t.key ? "#e85d26" : "var(--border2)",
-              background: activeTab === t.key ? "#e85d26" : "transparent",
-              color: activeTab === t.key ? "#fff" : "var(--muted3)",
-              fontSize: 11, fontFamily: "inherit", cursor: "pointer",
-              letterSpacing: 0.5, textTransform: "uppercase",
-            }}>{t.label}</button>
-          ))}
+          <button
+            onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
+            style={{
+              background: "var(--surface2)", border: "1px solid var(--border2)",
+              borderRadius: 10, width: 36, height: 36, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "var(--muted)", flexShrink: 0,
+            }}
+          >{theme === "dark" ? <FiSun size={16} /> : <FiMoon size={16} />}</button>
         </div>
       </div>
 
-      <div style={{ padding: "14px 18px 100px" }}>
+      <div style={{ padding: "14px 18px 88px" }}>
         {activeTab === "library" && (
           <LibraryTab
             search={search} setSearch={setSearch}
@@ -527,15 +502,44 @@ export default function App() {
         )}
       </div>
 
-      {/* Footer */}
-      <div style={{
+      {/* ── Bottom Nav ── */}
+      <nav style={{
         position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-        width: "100%", maxWidth: 480, background: "var(--bg)",
-        borderTop: "1px solid var(--border-subtle)", padding: "10px 18px 18px",
-        textAlign: "center", fontSize: 10, color: "var(--border2)", letterSpacing: 2,
+        width: "100%", maxWidth: 480,
+        background: "var(--header-bg)", borderTop: "1px solid var(--border)",
+        display: "flex", zIndex: 50,
+        paddingBottom: "max(8px, env(safe-area-inset-bottom))",
       }}>
-        {prefs.name ? `${prefs.name.toUpperCase()} · ` : ""}{totalExercises} EXERCISES · LOW IMPACT PROTOCOL
-      </div>
+        {[
+          { key: "library",  label: "Library",  Icon: FiBook },
+          { key: "schedule", label: "Today",    Icon: FiCalendar },
+          { key: "progress", label: "Progress", Icon: FiTrendingUp },
+          { key: "settings", label: "Settings", Icon: FiSettings },
+        ].map(({ key, label, Icon }) => {
+          const active = activeTab === key;
+          return (
+            <button key={key} onClick={() => setActiveTab(key)} style={{
+              flex: 1, display: "flex", flexDirection: "column",
+              alignItems: "center", gap: 3, background: "none", border: "none",
+              cursor: "pointer", padding: "10px 0 6px", fontFamily: "inherit",
+              position: "relative", outline: "none",
+            }}>
+              <div style={{
+                position: "absolute", top: 0, left: "25%", right: "25%",
+                height: 2, borderRadius: "0 0 2px 2px",
+                background: active ? "#e85d26" : "transparent",
+                transition: "background 0.2s",
+              }} />
+              <Icon size={20} color={active ? "#e85d26" : "var(--muted)"} />
+              <span style={{
+                fontSize: 9, letterSpacing: 0.5, textTransform: "uppercase",
+                color: active ? "#e85d26" : "var(--muted)",
+                fontFamily: "inherit",
+              }}>{label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Exercise demo modal */}
       <ExerciseDemoModal demoEx={demoEx} setDemoEx={setDemoEx} />
