@@ -1657,6 +1657,34 @@ export default function App() {
                 </div>
               )}
 
+              {/* Safer options */}
+              {demoEx.substitutes?.length > 0 && (
+                <div style={{ background: "var(--warn-surface)", border: "1px solid #f59e0b33", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+                  <div style={{ fontSize: 9, color: "#f59e0b", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Safer Options</div>
+                  {demoEx.substitutes.map((subName, i) => {
+                    const subEx = Object.values(ALL_EXERCISES).flatMap(c => c.exercises).find(e => e.name === subName);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => subEx && setDemoEx(subEx)}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          width: "100%", background: "var(--surface)", border: "1px solid var(--border)",
+                          borderRadius: 8, padding: "10px 12px", marginBottom: i < demoEx.substitutes.length - 1 ? 8 : 0,
+                          cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: "var(--text)" }}>{subName}</div>
+                          {subEx && <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{subEx.sets} · {subEx.notes}</div>}
+                        </div>
+                        <span style={{ fontSize: 16, color: "#f59e0b", flexShrink: 0, marginLeft: 8 }}>→</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* YouTube button */}
               <a
                 href={`https://www.youtube.com/results?search_query=${ytQuery}`}
