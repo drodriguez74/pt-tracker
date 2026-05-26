@@ -63,7 +63,6 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [completed, setCompleted] = useState(() => migrateCompleted(loadStorage("pt-completed", {})));
-  const [expanded, setExpanded] = useState(null);
   const [prefs, setPrefs] = useState(() => loadStorage("pt-prefs", DEFAULT_PREFS));
   const [missionStartDate, setMissionStartDate] = useState(() =>
     localStorage.getItem("pt-mission-start")
@@ -496,12 +495,12 @@ export default function App() {
             selectedDay={selectedDay} setSelectedDay={setSelectedDay}
             dayData={dayData} dayExercises={dayExercises} dayDone={dayDone}
             todayStr={todayStr} completed={completed}
-            expanded={expanded} setExpanded={setExpanded}
             missionStartDate={missionStartDate} weekProg={weekProg}
             hasCaution={hasCaution} toggleSet={toggleSet}
             completeAllSets={completeAllSets}
             startWorkout={startWorkout} setDemoEx={setDemoEx}
             prefs={prefs}
+            completedWorkoutDates={completedWorkoutDates}
           />
         )}
         {activeTab === "progress" && (
