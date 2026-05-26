@@ -37,6 +37,11 @@
 
   --scrollbar-track:  #111111;
   --scrollbar-thumb:  #333333;
+
+  /* Responsive */
+  --content-px:      18px;
+  --desktop-bg:      #030303;
+  --desktop-shadow:  0 0 0 1px #1e1e1e, 0 0 80px rgba(0, 0, 0, 0.6);
 }
 
 /* ── Light mode ──────────────────────────────────────────────────────────── */
@@ -71,6 +76,11 @@
 
   --scrollbar-track:  #e2e5eb;
   --scrollbar-thumb:  #9ca3af;
+
+  /* Responsive */
+  --content-px:      18px;
+  --desktop-bg:      #d4d8e0;
+  --desktop-shadow:  0 0 0 1px #c9cdd6, 0 8px 64px rgba(0, 0, 0, 0.14);
 }
 
 body {
@@ -121,4 +131,36 @@ body {
 @keyframes slideUp {
   from { transform: translateY(60px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Desktop responsive ──────────────────────────────────────────────────── */
+@media (min-width: 600px) {
+  :root {
+    --content-px: 28px;
+  }
+
+  body {
+    background-color: var(--desktop-bg);
+    /* subtle dot grid in the gutters */
+    background-image: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--border) 60%, transparent) 1px,
+      transparent 1px
+    );
+    background-size: 22px 22px;
+  }
+
+  .app-shell {
+    box-shadow: var(--desktop-shadow);
+    border-left:  1px solid var(--border);
+    border-right: 1px solid var(--border);
+    /* visual separation from gutter on large screens */
+    isolation: isolate;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --content-px: 32px;
+  }
 }

@@ -428,10 +428,10 @@ export default function App() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: "'Barlow Condensed', sans-serif", maxWidth: 480, margin: "0 auto" }}>
+    <div className="app-shell" style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: "'Barlow Condensed', sans-serif", maxWidth: 480, margin: "0 auto" }}>
 
       {/* ── Header ── */}
-      <div style={{ background: "var(--header-bg)", borderBottom: "1px solid var(--border)", padding: "14px 18px", position: "sticky", top: 0, zIndex: 20 }}>
+      <div style={{ background: "var(--header-bg)", borderBottom: "1px solid var(--border)", padding: "14px var(--content-px)", position: "sticky", top: 0, zIndex: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             {prefs.name && (
@@ -453,7 +453,7 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{ padding: "14px 18px 88px" }}>
+      <div style={{ padding: "14px var(--content-px) 88px" }}>
         {activeTab === "library" && (
           <LibraryTab
             search={search} setSearch={setSearch}
