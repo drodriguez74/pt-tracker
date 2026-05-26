@@ -69,137 +69,136 @@ const ALL_EXERCISES = {
   pushVariations: {
     label: "Push Variations", color: "#e85d26", icon: GiMuscleUp,
     exercises: [
-      { name: "Standard Push-up", sets: "3x10", notes: "Elbows at 45°, core tight", caution: ["wrists"] },
-      { name: "Incline Push-up", sets: "3x12", notes: "Hands on wall or bench — easiest on shoulders" },
-      { name: "Decline Push-up", sets: "3x8", notes: "Feet elevated — upper chest focus", caution: ["shoulders"] },
-      { name: "Diamond Push-up", sets: "3x8", notes: "Skip if shoulders flare", caution: ["shoulders", "wrists"] },
-      { name: "Wide-Arm Push-up", sets: "3x10", notes: "Hands wider than shoulders" },
-      { name: "Hand-Release Push-up", sets: "3x8", notes: "Lift hands off floor each rep — controlled" },
-      { name: "Pike Push-up", sets: "3x8", notes: "Hips high, shoulder-safe overhead press", caution: ["shoulders", "wrists"] },
-      { name: "Wall Push-up", sets: "3x15", notes: "Recovery days or warm-up" },
-      { name: "Knee Push-up", sets: "3x12", notes: "Modified — great for shoulder recovery days" },
-      { name: "Archer Push-up", sets: "3x6/side", notes: "One arm loaded, one extended — advanced", caution: ["shoulders", "wrists"] },
-      { name: "Pseudo Planche Push-up", sets: "3x8", notes: "Hands at hips — tricep & shoulder strength", caution: ["shoulders", "wrists"] },
-      { name: "Slow Negative Push-up", sets: "3x6", notes: "5-second lowering — builds control", caution: ["wrists"] },
+      { name: "Standard Push-up",       sets: "3x10",    notes: "Elbows at 45°, core tight",                          difficulty: "intermediate", caution: ["wrists"],                   substitutes: ["Incline Push-up", "Wall Push-up"] },
+      { name: "Incline Push-up",        sets: "3x12",    notes: "Hands on wall or bench — easiest on shoulders",       difficulty: "beginner" },
+      { name: "Decline Push-up",        sets: "3x8",     notes: "Feet elevated — upper chest focus",                   difficulty: "intermediate", caution: ["shoulders"],                substitutes: ["Standard Push-up", "Incline Push-up"] },
+      { name: "Diamond Push-up",        sets: "3x8",     notes: "Skip if shoulders flare",                             difficulty: "intermediate", caution: ["shoulders", "wrists"],     substitutes: ["Wide-Arm Push-up", "Tricep Push-up"] },
+      { name: "Wide-Arm Push-up",       sets: "3x10",    notes: "Hands wider than shoulders",                          difficulty: "intermediate" },
+      { name: "Hand-Release Push-up",   sets: "3x8",     notes: "Lift hands off floor each rep — controlled",          difficulty: "intermediate" },
+      { name: "Pike Push-up",           sets: "3x8",     notes: "Hips high, shoulder-safe overhead press",             difficulty: "intermediate", caution: ["shoulders", "wrists"],     substitutes: ["Wall Push-up", "Incline Push-up"] },
+      { name: "Wall Push-up",           sets: "3x15",    notes: "Recovery days or warm-up",                            difficulty: "beginner" },
+      { name: "Knee Push-up",           sets: "3x12",    notes: "Modified — great for shoulder recovery days",         difficulty: "beginner" },
+      { name: "Archer Push-up",         sets: "3x6/side",notes: "One arm loaded, one extended — advanced",             difficulty: "advanced",     caution: ["shoulders", "wrists"],     substitutes: ["Wide-Arm Push-up", "Standard Push-up"] },
+      { name: "Pseudo Planche Push-up", sets: "3x8",     notes: "Hands at hips — tricep & shoulder strength",          difficulty: "advanced",     caution: ["shoulders", "wrists"],     substitutes: ["Standard Push-up", "Diamond Push-up"] },
+      { name: "Slow Negative Push-up",  sets: "3x6",     notes: "5-second lowering — builds control",                  difficulty: "intermediate", caution: ["wrists"],                   substitutes: ["Incline Push-up", "Wall Push-up"] },
     ],
   },
   pullVariations: {
     label: "Pull & Row Variations", color: "#8b5cf6", icon: GiWeightLiftingUp,
     exercises: [
-      { name: "Pull-up (overhand)", sets: "3x5", notes: "Use a bar — full range", caution: ["shoulders"] },
-      { name: "Chin-up (underhand)", sets: "3x5", notes: "Easier on shoulders than pull-up" },
-      { name: "Australian Pull-up", sets: "3x10", notes: "Low bar or table edge — great back exercise" },
-      { name: "Doorframe Row", sets: "3x10", notes: "Grab both sides of a doorframe and row" },
-      { name: "Towel Row", sets: "3x10", notes: "Loop towel around a pole and row" },
-      { name: "Negative Pull-up", sets: "3x5", notes: "Jump up, lower slowly — builds pulling strength", caution: ["shoulders"] },
-      { name: "Scapular Pull-up", sets: "3x10", notes: "Hang and shrug shoulder blades — warm-up" },
-      { name: "Dead Hang", sets: "3x20s", notes: "Decompress spine, grip strength" },
-      { name: "Flex Hang (hold at top)", sets: "3x10s", notes: "Hold chin above bar", caution: ["shoulders"] },
+      { name: "Pull-up (overhand)",        sets: "3x5",   notes: "Use a bar — full range",                             difficulty: "advanced",     caution: ["shoulders"],    substitutes: ["Australian Pull-up", "Doorframe Row"] },
+      { name: "Chin-up (underhand)",       sets: "3x5",   notes: "Easier on shoulders than pull-up",                   difficulty: "intermediate" },
+      { name: "Australian Pull-up",        sets: "3x10",  notes: "Low bar or table edge — great back exercise",         difficulty: "beginner" },
+      { name: "Doorframe Row",             sets: "3x10",  notes: "Grab both sides of a doorframe and row",             difficulty: "beginner" },
+      { name: "Towel Row",                 sets: "3x10",  notes: "Loop towel around a pole and row",                   difficulty: "beginner" },
+      { name: "Negative Pull-up",          sets: "3x5",   notes: "Jump up, lower slowly — builds pulling strength",    difficulty: "intermediate", caution: ["shoulders"],    substitutes: ["Scapular Pull-up", "Australian Pull-up"] },
+      { name: "Scapular Pull-up",          sets: "3x10",  notes: "Hang and shrug shoulder blades — warm-up",           difficulty: "beginner" },
+      { name: "Dead Hang",                 sets: "3x20s", notes: "Decompress spine, grip strength",                    difficulty: "beginner" },
+      { name: "Flex Hang (hold at top)",   sets: "3x10s", notes: "Hold chin above bar",                                difficulty: "intermediate", caution: ["shoulders"],    substitutes: ["Dead Hang", "Scapular Pull-up"] },
     ],
   },
   dipsTriCeps: {
     label: "Dips & Triceps", color: "#f59e0b", icon: FaDumbbell,
     exercises: [
-      { name: "Bench Dip (shallow)", sets: "3x10", notes: "Limit depth to protect shoulders", caution: ["shoulders"] },
-      { name: "Chair Dip", sets: "3x10", notes: "Use a sturdy chair — keep elbows back", caution: ["shoulders"] },
-      { name: "Tricep Push-up", sets: "3x10", notes: "Elbows tight to sides", caution: ["wrists"] },
-      { name: "Diamond Push-up (tricep focus)", sets: "3x8", notes: "Hands form diamond under chest", caution: ["shoulders", "wrists"] },
+      { name: "Bench Dip (shallow)",           sets: "3x10", notes: "Limit depth to protect shoulders",       difficulty: "intermediate", caution: ["shoulders"],          substitutes: ["Tricep Push-up"] },
+      { name: "Chair Dip",                     sets: "3x10", notes: "Use a sturdy chair — keep elbows back",  difficulty: "intermediate", caution: ["shoulders"],          substitutes: ["Tricep Push-up"] },
+      { name: "Tricep Push-up",                sets: "3x10", notes: "Elbows tight to sides",                  difficulty: "intermediate", caution: ["wrists"],             substitutes: ["Diamond Push-up (tricep focus)"] },
+      { name: "Diamond Push-up (tricep focus)",sets: "3x8",  notes: "Hands form diamond under chest",         difficulty: "intermediate", caution: ["shoulders", "wrists"],substitutes: ["Tricep Push-up"] },
     ],
   },
   core: {
     label: "Core & Abs", color: "#ef4444", icon: FaFire,
     exercises: [
-      { name: "Dead Bug", sets: "3x10", notes: "Best core exercise for back issues" },
-      { name: "Bird Dog", sets: "3x10/side", notes: "Core stability — spine neutral" },
-      { name: "Plank (standard)", sets: "3x30s", notes: "No lower back strain — back flat", caution: ["wrists"] },
-      { name: "Side Plank", sets: "3x20s/side", notes: "Obliques — back-safe" },
-      { name: "Glute Bridge", sets: "3x15", notes: "Core + glutes — protects lower back" },
-      { name: "Single-Leg Glute Bridge", sets: "3x10/side", notes: "More glute activation — advanced version" },
-      { name: "Hollow Body Hold", sets: "3x20s", notes: "Military staple — low back pressed to floor", caution: ["lowerBack"] },
-      { name: "Bent-Knee Leg Raise", sets: "3x10", notes: "Gentler on lower back than straight-leg", caution: ["lowerBack", "hips"] },
-      { name: "Crunch (controlled)", sets: "3x12", notes: "Upper abs — don't pull neck", caution: ["neck", "lowerBack"] },
-      { name: "Bicycle Crunch", sets: "3x10/side", notes: "Obliques — slow and controlled", caution: ["neck"] },
-      { name: "Flutter Kick", sets: "3x20s", notes: "Hip flexors — keep low back pressed down", caution: ["lowerBack", "hips"] },
-      { name: "Superman Hold", sets: "3x10", notes: "Lower back strengthening — hold 2s", caution: ["lowerBack"] },
-      { name: "Reverse Snow Angel (floor)", sets: "3x10", notes: "Upper back and rear delts" },
-      { name: "V-Sit Hold", sets: "3x15s", notes: "Advanced — skip if back is flaring", caution: ["lowerBack"] },
-      { name: "Windshield Wiper (bent knee)", sets: "3x10/side", notes: "Rotational core — go slow", caution: ["lowerBack", "hips"] },
-      { name: "Plank Hip Dip", sets: "3x10/side", notes: "Side obliques from plank position", caution: ["wrists"] },
-      { name: "Ab Wheel Rollout (from knees)", sets: "3x8", notes: "Advanced — full core", caution: ["lowerBack", "wrists", "shoulders"] },
-      { name: "Seated Knee Tuck", sets: "3x12", notes: "Sit on edge of chair, pull knees to chest", caution: ["hips", "lowerBack"] },
+      { name: "Dead Bug",                    sets: "3x10",     notes: "Best core exercise for back issues",                     difficulty: "beginner" },
+      { name: "Bird Dog",                    sets: "3x10/side", notes: "Core stability — spine neutral",                        difficulty: "beginner" },
+      { name: "Plank (standard)",            sets: "3x30s",    notes: "No lower back strain — back flat",                       difficulty: "intermediate", caution: ["wrists"],                      substitutes: ["Dead Bug", "Bird Dog"] },
+      { name: "Side Plank",                  sets: "3x20s/side",notes: "Obliques — back-safe",                                  difficulty: "intermediate" },
+      { name: "Glute Bridge",                sets: "3x15",     notes: "Core + glutes — protects lower back",                    difficulty: "beginner" },
+      { name: "Single-Leg Glute Bridge",     sets: "3x10/side",notes: "More glute activation — advanced version",               difficulty: "intermediate" },
+      { name: "Hollow Body Hold",            sets: "3x20s",    notes: "Military staple — low back pressed to floor",            difficulty: "intermediate", caution: ["lowerBack"],                   substitutes: ["Dead Bug", "Bird Dog"] },
+      { name: "Bent-Knee Leg Raise",         sets: "3x10",     notes: "Gentler on lower back than straight-leg",                difficulty: "beginner",     caution: ["lowerBack", "hips"],           substitutes: ["Bird Dog", "Dead Bug"] },
+      { name: "Crunch (controlled)",         sets: "3x12",     notes: "Upper abs — don't pull neck",                           difficulty: "beginner",     caution: ["neck", "lowerBack"],           substitutes: ["Dead Bug", "Bird Dog"] },
+      { name: "Bicycle Crunch",              sets: "3x10/side",notes: "Obliques — slow and controlled",                        difficulty: "intermediate", caution: ["neck"],                        substitutes: ["Bird Dog", "Side Plank"] },
+      { name: "Flutter Kick",                sets: "3x20s",    notes: "Hip flexors — keep low back pressed down",              difficulty: "intermediate", caution: ["lowerBack", "hips"],           substitutes: ["Dead Bug", "Glute Bridge"] },
+      { name: "Superman Hold",               sets: "3x10",     notes: "Lower back strengthening — hold 2s",                    difficulty: "beginner",     caution: ["lowerBack"],                   substitutes: ["Bird Dog", "Dead Bug"] },
+      { name: "Reverse Snow Angel (floor)",  sets: "3x10",     notes: "Upper back and rear delts",                             difficulty: "beginner" },
+      { name: "V-Sit Hold",                  sets: "3x15s",    notes: "Advanced — skip if back is flaring",                    difficulty: "advanced",     caution: ["lowerBack"],                   substitutes: ["Hollow Body Hold", "Dead Bug"] },
+      { name: "Windshield Wiper (bent knee)",sets: "3x10/side",notes: "Rotational core — go slow",                             difficulty: "intermediate", caution: ["lowerBack", "hips"],           substitutes: ["Side Plank", "Bird Dog"] },
+      { name: "Plank Hip Dip",               sets: "3x10/side",notes: "Side obliques from plank position",                     difficulty: "intermediate", caution: ["wrists"],                      substitutes: ["Side Plank", "Dead Bug"] },
+      { name: "Ab Wheel Rollout (from knees)",sets: "3x8",     notes: "Advanced — full core",                                  difficulty: "advanced",     caution: ["lowerBack", "wrists", "shoulders"], substitutes: ["Dead Bug", "Plank (standard)"] },
+      { name: "Seated Knee Tuck",            sets: "3x12",     notes: "Sit on edge of chair, pull knees to chest",             difficulty: "beginner",     caution: ["hips", "lowerBack"],           substitutes: ["Bird Dog", "Dead Bug"] },
     ],
   },
   lowerBody: {
     label: "Lower Body", color: "#22c55e", icon: GiLeg,
     exercises: [
-      // Hinge pattern first — was buried at positions 13-14, now 0-1
-      { name: "Romanian Deadlift (BW)", sets: "3x10", notes: "Hip hinge — back flat, push hips back", caution: ["lowerBack"] },
-      { name: "Good Morning (bodyweight)", sets: "3x10", notes: "Hamstrings — hinge at hips, back flat", caution: ["lowerBack"] },
-      { name: "Bodyweight Squat", sets: "3x10", notes: "Don't pass 90° if knees flare", caution: ["knees"] },
-      { name: "Reverse Lunge", sets: "3x10/side", notes: "Easier on knees than forward lunges" },
-      { name: "Glute Bridge", sets: "3x15", notes: "Core + glutes — protects lower back" },
-      { name: "Single-Leg Glute Bridge", sets: "3x10/side", notes: "More glute activation — advanced version" },
-      { name: "Wall Sit", sets: "3x30s", notes: "Isometric — zero knee impact" },
-      { name: "Sumo Squat", sets: "3x10", notes: "Wider stance — inner thigh focus", caution: ["knees", "hips"] },
-      { name: "Pulse Squat", sets: "3x15", notes: "Small pulses at bottom — burns without impact", caution: ["knees"] },
-      { name: "Side Lunge", sets: "3x8/side", notes: "Lateral movement — inner thigh & glutes", caution: ["knees", "hips"] },
-      { name: "Step-up (low step)", sets: "3x10/side", notes: "Controlled — no knee past toe", caution: ["knees"] },
-      { name: "Calf Raise", sets: "3x15", notes: "Stand on step for full range" },
-      { name: "Single-Leg Calf Raise", sets: "3x12/side", notes: "More balance and ankle stability" },
-      { name: "Glute Kickback", sets: "3x12/side", notes: "On all fours — glutes and hamstrings" },
-      { name: "Fire Hydrant", sets: "3x12/side", notes: "Hip abductor — great for knee stability", caution: ["hips"] },
-      { name: "Donkey Kick", sets: "3x12/side", notes: "On all fours — glute isolation" },
-      { name: "Squat Hold", sets: "3x20s", notes: "Static squat — mobility and endurance", caution: ["knees"] },
-      { name: "Lateral Leg Raise (standing)", sets: "3x12/side", notes: "Hip abductor — use wall for balance" },
+      { name: "Romanian Deadlift (BW)",      sets: "3x10",     notes: "Hip hinge — back flat, push hips back",  difficulty: "intermediate", caution: ["lowerBack"],       substitutes: ["Glute Bridge", "Donkey Kick"] },
+      { name: "Good Morning (bodyweight)",   sets: "3x10",     notes: "Hamstrings — hinge at hips, back flat",  difficulty: "beginner",     caution: ["lowerBack"],       substitutes: ["Glute Bridge", "Glute Kickback"] },
+      { name: "Bodyweight Squat",            sets: "3x10",     notes: "Don't pass 90° if knees flare",          difficulty: "beginner",     caution: ["knees"],           substitutes: ["Wall Sit", "Glute Bridge"] },
+      { name: "Reverse Lunge",               sets: "3x10/side",notes: "Easier on knees than forward lunges",    difficulty: "intermediate" },
+      { name: "Glute Bridge",                sets: "3x15",     notes: "Core + glutes — protects lower back",    difficulty: "beginner" },
+      { name: "Single-Leg Glute Bridge",     sets: "3x10/side",notes: "More glute activation — advanced version",difficulty: "intermediate" },
+      { name: "Wall Sit",                    sets: "3x30s",    notes: "Isometric — zero knee impact",           difficulty: "beginner" },
+      { name: "Sumo Squat",                  sets: "3x10",     notes: "Wider stance — inner thigh focus",       difficulty: "beginner",     caution: ["knees", "hips"],  substitutes: ["Wall Sit", "Glute Bridge"] },
+      { name: "Pulse Squat",                 sets: "3x15",     notes: "Small pulses at bottom — burns without impact", difficulty: "intermediate", caution: ["knees"],    substitutes: ["Wall Sit", "Bodyweight Squat"] },
+      { name: "Side Lunge",                  sets: "3x8/side", notes: "Lateral movement — inner thigh & glutes",difficulty: "intermediate", caution: ["knees", "hips"],  substitutes: ["Lateral Leg Raise (standing)", "Glute Bridge"] },
+      { name: "Step-up (low step)",          sets: "3x10/side",notes: "Controlled — no knee past toe",          difficulty: "beginner",     caution: ["knees"],           substitutes: ["Wall Sit", "Bodyweight Squat"] },
+      { name: "Calf Raise",                  sets: "3x15",     notes: "Stand on step for full range",           difficulty: "beginner" },
+      { name: "Single-Leg Calf Raise",       sets: "3x12/side",notes: "More balance and ankle stability",       difficulty: "intermediate" },
+      { name: "Glute Kickback",              sets: "3x12/side",notes: "On all fours — glutes and hamstrings",   difficulty: "beginner" },
+      { name: "Fire Hydrant",                sets: "3x12/side",notes: "Hip abductor — great for knee stability",difficulty: "beginner",     caution: ["hips"],            substitutes: ["Glute Bridge", "Lateral Leg Raise (standing)"] },
+      { name: "Donkey Kick",                 sets: "3x12/side",notes: "On all fours — glute isolation",         difficulty: "beginner" },
+      { name: "Squat Hold",                  sets: "3x20s",    notes: "Static squat — mobility and endurance",  difficulty: "intermediate", caution: ["knees"],           substitutes: ["Wall Sit", "Glute Bridge"] },
+      { name: "Lateral Leg Raise (standing)",sets: "3x12/side",notes: "Hip abductor — use wall for balance",   difficulty: "beginner" },
     ],
   },
   back: {
     label: "Back & Posture", color: "#0ea5e9", icon: GiBodyHeight,
     exercises: [
-      { name: "Superman", sets: "3x10", notes: "Lower back — hold 2 sec at top", caution: ["lowerBack"] },
-      { name: "Reverse Snow Angel", sets: "3x10", notes: "Prone — rear delts and upper back" },
-      { name: "YTW (floor)", sets: "3x8 each", notes: "Y, T, W positions — posture builder" },
-      { name: "Prone Hip Extension", sets: "3x10/side", notes: "Lying face down — lower back", caution: ["lowerBack"] },
-      { name: "Cat-Cow Stretch", sets: "3x10", notes: "Spinal mobility — not strength but vital" },
-      { name: "Thoracic Extension (on floor)", sets: "3x10", notes: "Improves posture and upper back mobility" },
-      { name: "Wall Angels", sets: "3x10", notes: "Back flat on wall — shoulder & posture" },
+      { name: "Superman",                    sets: "3x10",     notes: "Lower back — hold 2 sec at top",                    difficulty: "beginner",     caution: ["lowerBack"],  substitutes: ["Bird Dog", "Cat-Cow Stretch"] },
+      { name: "Reverse Snow Angel",          sets: "3x10",     notes: "Prone — rear delts and upper back",                  difficulty: "beginner" },
+      { name: "YTW (floor)",                 sets: "3x8 each", notes: "Y, T, W positions — posture builder",                difficulty: "beginner" },
+      { name: "Prone Hip Extension",         sets: "3x10/side",notes: "Lying face down — lower back",                       difficulty: "beginner",     caution: ["lowerBack"],  substitutes: ["Glute Bridge", "Cat-Cow Stretch"] },
+      { name: "Cat-Cow Stretch",             sets: "3x10",     notes: "Spinal mobility — not strength but vital",           difficulty: "beginner" },
+      { name: "Thoracic Extension (on floor)",sets: "3x10",    notes: "Improves posture and upper back mobility",           difficulty: "beginner" },
+      { name: "Wall Angels",                 sets: "3x10",     notes: "Back flat on wall — shoulder & posture",             difficulty: "beginner" },
     ],
   },
   cardioConditioning: {
     label: "Cardio & Conditioning", color: "#3b82f6", icon: GiRunningShoe,
     exercises: [
-      { name: "March in Place", sets: "3x60s", notes: "Warm-up / cool-down staple" },
-      { name: "Low-Impact Jumping Jacks", sets: "3x30s", notes: "Step side-to-side — no jumping" },
-      { name: "Slow Mountain Climbers", sets: "3x10/side", notes: "Controlled pace — core + cardio", caution: ["wrists"] },
-      { name: "Modified Burpee (no jump)", sets: "3x8", notes: "Step back instead of jumping", caution: ["wrists", "shoulders"] },
-      { name: "Bear Crawl", sets: "3x10 steps", notes: "Full body — slow and deliberate", caution: ["wrists", "shoulders"] },
-      { name: "Lateral Shuffle (slow)", sets: "3x30s", notes: "Side-to-side — agility without impact" },
-      { name: "High Knee March", sets: "3x30s", notes: "Controlled — hip flexor activation", caution: ["hips"] },
-      { name: "Butt Kicker March", sets: "3x30s", notes: "Hamstring activation — no running", caution: ["knees"] },
-      { name: "Inchworm", sets: "3x8", notes: "Walk hands out to plank and back — full body", caution: ["wrists", "lowerBack"] },
-      { name: "Squat-to-Stand", sets: "3x10", notes: "Hamstring mobility + squat warm-up", caution: ["knees"] },
-      { name: "Slow Burpee (4-count)", sets: "3x6", notes: "Down in 2, up in 2 — controlled", caution: ["wrists", "shoulders", "knees"] },
-      { name: "Standing Cross-Body Crunch", sets: "3x12/side", notes: "Elbow to opposite knee — cardio + core" },
+      { name: "March in Place",              sets: "3x60s",     notes: "Warm-up / cool-down staple",                       difficulty: "beginner" },
+      { name: "Low-Impact Jumping Jacks",    sets: "3x30s",     notes: "Step side-to-side — no jumping",                   difficulty: "beginner" },
+      { name: "Slow Mountain Climbers",      sets: "3x10/side", notes: "Controlled pace — core + cardio",                  difficulty: "intermediate", caution: ["wrists"],              substitutes: ["High Knee March", "Standing Cross-Body Crunch"] },
+      { name: "Modified Burpee (no jump)",   sets: "3x8",       notes: "Step back instead of jumping",                     difficulty: "intermediate", caution: ["wrists", "shoulders"], substitutes: ["March in Place", "Squat-to-Stand"] },
+      { name: "Bear Crawl",                  sets: "3x10 steps",notes: "Full body — slow and deliberate",                  difficulty: "intermediate", caution: ["wrists", "shoulders"], substitutes: ["Lateral Shuffle (slow)", "March in Place"] },
+      { name: "Lateral Shuffle (slow)",      sets: "3x30s",     notes: "Side-to-side — agility without impact",            difficulty: "beginner" },
+      { name: "High Knee March",             sets: "3x30s",     notes: "Controlled — hip flexor activation",               difficulty: "beginner",     caution: ["hips"],                substitutes: ["March in Place", "Butt Kicker March"] },
+      { name: "Butt Kicker March",           sets: "3x30s",     notes: "Hamstring activation — no running",                difficulty: "beginner",     caution: ["knees"],               substitutes: ["March in Place", "Lateral Shuffle (slow)"] },
+      { name: "Inchworm",                    sets: "3x8",       notes: "Walk hands out to plank and back — full body",     difficulty: "intermediate", caution: ["wrists", "lowerBack"], substitutes: ["Squat-to-Stand", "March in Place"] },
+      { name: "Squat-to-Stand",              sets: "3x10",      notes: "Hamstring mobility + squat warm-up",               difficulty: "beginner",     caution: ["knees"],               substitutes: ["March in Place", "Lateral Shuffle (slow)"] },
+      { name: "Slow Burpee (4-count)",       sets: "3x6",       notes: "Down in 2, up in 2 — controlled",                  difficulty: "intermediate", caution: ["wrists", "shoulders", "knees"], substitutes: ["March in Place", "Lateral Shuffle (slow)"] },
+      { name: "Standing Cross-Body Crunch",  sets: "3x12/side", notes: "Elbow to opposite knee — cardio + core",           difficulty: "beginner" },
     ],
   },
   mobilityWarmup: {
     label: "Mobility & Warm-Up", color: "#10b981", icon: GiMeditation,
     exercises: [
-      { name: "Arm Circles (forward & back)", sets: "2x10/dir", notes: "Shoulder warm-up — essential before pushing" },
-      { name: "Shoulder Rolls", sets: "2x10/dir", notes: "Loosens shoulder joint" },
-      { name: "Hip Circle (standing)", sets: "2x10/dir", notes: "Hip joint mobility" },
-      { name: "Leg Swing (front/back)", sets: "2x10/side", notes: "Dynamic hamstring warm-up", caution: ["hips"] },
-      { name: "Leg Swing (side/side)", sets: "2x10/side", notes: "Dynamic hip abductor warm-up", caution: ["hips"] },
-      { name: "Ankle Circle", sets: "2x10/dir", notes: "Ankle mobility — helps knees" },
-      { name: "Wrist Circle", sets: "2x10/dir", notes: "Warm-up before push-up variations" },
-      { name: "Cat-Cow", sets: "2x10", notes: "Spinal mobility — must-do for lower back" },
-      { name: "Child's Pose", sets: "2x20s", notes: "Lower back decompression" },
-      { name: "Cobra Stretch", sets: "2x20s", notes: "Spinal extension — helpful for most lower back issues; skip if spinal stenosis", caution: ["lowerBack"] },
-      { name: "Hip Flexor Stretch (kneeling)", sets: "2x20s/side", notes: "Tight from sitting — crucial", caution: ["knees", "hips"] },
-      { name: "World's Greatest Stretch", sets: "2x5/side", notes: "Full body mobility — slow", caution: ["hips", "knees"] },
-      { name: "Doorway Chest Stretch", sets: "2x20s", notes: "Opens chest — shoulder friendly", caution: ["shoulders"] },
-      { name: "Thread the Needle", sets: "2x20s/side", notes: "Thoracic rotation — upper back" },
-      { name: "Neck Rolls (slow)", sets: "2x5/dir", notes: "Cervical mobility — slow and gentle", caution: ["neck"] },
+      { name: "Arm Circles (forward & back)",  sets: "2x10/dir",  notes: "Shoulder warm-up — essential before pushing",                                     difficulty: "beginner" },
+      { name: "Shoulder Rolls",                sets: "2x10/dir",  notes: "Loosens shoulder joint",                                                           difficulty: "beginner" },
+      { name: "Hip Circle (standing)",         sets: "2x10/dir",  notes: "Hip joint mobility",                                                               difficulty: "beginner" },
+      { name: "Leg Swing (front/back)",        sets: "2x10/side", notes: "Dynamic hamstring warm-up",                                                        difficulty: "beginner", caution: ["hips"], substitutes: ["Hip Circle (standing)", "Ankle Circle"] },
+      { name: "Leg Swing (side/side)",         sets: "2x10/side", notes: "Dynamic hip abductor warm-up",                                                     difficulty: "beginner", caution: ["hips"], substitutes: ["Hip Circle (standing)", "Ankle Circle"] },
+      { name: "Ankle Circle",                  sets: "2x10/dir",  notes: "Ankle mobility — helps knees",                                                     difficulty: "beginner" },
+      { name: "Wrist Circle",                  sets: "2x10/dir",  notes: "Warm-up before push-up variations",                                                difficulty: "beginner" },
+      { name: "Cat-Cow",                       sets: "2x10",      notes: "Spinal mobility — must-do for lower back",                                         difficulty: "beginner" },
+      { name: "Child's Pose",                  sets: "2x20s",     notes: "Lower back decompression",                                                         difficulty: "beginner" },
+      { name: "Cobra Stretch",                 sets: "2x20s",     notes: "Spinal extension — helpful for most lower back issues; skip if spinal stenosis",   difficulty: "beginner", caution: ["lowerBack"], substitutes: ["Cat-Cow", "Child's Pose"] },
+      { name: "Hip Flexor Stretch (kneeling)", sets: "2x20s/side",notes: "Tight from sitting — crucial",                                                     difficulty: "beginner", caution: ["knees", "hips"], substitutes: ["Hip Circle (standing)", "Leg Swing (front/back)"] },
+      { name: "World's Greatest Stretch",      sets: "2x5/side",  notes: "Full body mobility — slow",                                                        difficulty: "intermediate", caution: ["hips", "knees"], substitutes: ["Hip Circle (standing)", "Ankle Circle"] },
+      { name: "Doorway Chest Stretch",         sets: "2x20s",     notes: "Opens chest — shoulder friendly",                                                  difficulty: "beginner", caution: ["shoulders"], substitutes: ["Thread the Needle", "Wall Angels"] },
+      { name: "Thread the Needle",             sets: "2x20s/side",notes: "Thoracic rotation — upper back",                                                   difficulty: "beginner" },
+      { name: "Neck Rolls (slow)",             sets: "2x5/dir",   notes: "Cervical mobility — slow and gentle",                                              difficulty: "beginner", caution: ["neck"], substitutes: ["Shoulder Rolls", "Arm Circles (forward & back)"] },
     ],
   },
 };
@@ -641,7 +640,21 @@ function getThisWeekDates() {
   });
 }
 
-const DEFAULT_PREFS = { name: "", ageRange: "", ailments: [] };
+const DEFAULT_PREFS = { name: "", ageRange: "", ailments: [], gymType: "bodyweight" };
+
+const GYM_TYPES = [
+  { key: "bodyweight", label: "Bodyweight Only",          note: "No equipment needed — anywhere, anytime." },
+  { key: "home",       label: "Home Gym",                 note: "Bands, dumbbells, or a pull-up bar." },
+  { key: "commercial", label: "Commercial Gym",            note: "Machines, cables, barbells." },
+  { key: "crossfit",   label: "CrossFit / Box",           note: "Full barbell, gymnastics, conditioning." },
+];
+
+const PROGRESSION = [
+  { label: "Week 1", sub: "Build the habit",   sets: 3, reps: 8,  note: "Focus on form" },
+  { label: "Week 2", sub: "Volume base",       sets: 3, reps: 10, note: "Full range of motion" },
+  { label: "Week 3", sub: "Add a set",         sets: 4, reps: 10, note: "Push the last set" },
+  { label: "Week 4", sub: "Peak effort",       sets: 4, reps: 12, note: "Control the negative" },
+];
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -661,6 +674,7 @@ export default function App() {
   const [selectedDay, setSelectedDay] = useState(() => DAY_ABBRS[new Date().getDay()]);
   const [demoEx, setDemoEx] = useState(null);
   const [search, setSearch] = useState("");
+  const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [completed, setCompleted] = useState(() => migrateCompleted(loadStorage("pt-completed", {})));
   const [expanded, setExpanded] = useState(null);
   const [prefs, setPrefs] = useState(() => loadStorage("pt-prefs", DEFAULT_PREFS));
@@ -770,12 +784,17 @@ export default function App() {
 
   // ── Derived display values ─────────────────────────────────────────────────
 
-  const filteredExercises = search.length > 1
-    ? Object.values(ALL_EXERCISES).flatMap(c => c.exercises).filter(e =>
-        e.name.toLowerCase().includes(search.toLowerCase()) ||
-        e.notes.toLowerCase().includes(search.toLowerCase())
-      )
-    : ALL_EXERCISES[selectedCat]?.exercises || [];
+  const weekProg = PROGRESSION[Math.min(weekNumber, 3)];
+
+  const filteredExercises = (() => {
+    const base = search.length > 1
+      ? Object.values(ALL_EXERCISES).flatMap(c => c.exercises).filter(e =>
+          e.name.toLowerCase().includes(search.toLowerCase()) ||
+          e.notes.toLowerCase().includes(search.toLowerCase())
+        )
+      : ALL_EXERCISES[selectedCat]?.exercises || [];
+    return difficultyFilter === "all" ? base : base.filter(e => e.difficulty === difficultyFilter);
+  })();
 
   const workoutsCompleted = completedWorkoutDates.length;
   const missionProgress = Math.min(Math.round((workoutsCompleted / TARGET_WORKOUTS) * 100), 100);
@@ -1032,8 +1051,29 @@ export default function App() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search exercises..."
-              style={{ ...inputStyle, marginBottom: 14 }}
+              style={{ ...inputStyle, marginBottom: 10 }}
             />
+
+            {/* Difficulty filter pills */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+              {[
+                { key: "all",          label: "All" },
+                { key: "beginner",     label: "Beginner",     color: "#22c55e" },
+                { key: "intermediate", label: "Intermediate", color: "#f59e0b" },
+                { key: "advanced",     label: "Advanced",     color: "#ef4444" },
+              ].map(d => {
+                const active = difficultyFilter === d.key;
+                const c = d.color || "var(--muted)";
+                return (
+                  <button key={d.key} onClick={() => setDifficultyFilter(d.key)} style={{
+                    padding: "5px 12px", borderRadius: 20, border: `1px solid ${active ? c : "var(--border2)"}`,
+                    background: active ? c + "22" : "transparent",
+                    color: active ? c : "var(--muted3)",
+                    fontSize: 10, letterSpacing: 0.5, fontFamily: "inherit", cursor: "pointer",
+                  }}>{d.label}</button>
+                );
+              })}
+            </div>
 
             {!search && (
               <div style={{ display: "flex", gap: 6, marginBottom: 14, overflowX: "auto", paddingBottom: 6 }}>
@@ -1067,8 +1107,16 @@ export default function App() {
                   border: `1px solid ${warn ? "#f59e0b44" : "var(--border)"}`,
                   borderRadius: 11, padding: "13px 15px", marginBottom: 8,
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 14, fontWeight: "bold" }}>{ex.name}</span>
+                    {(() => {
+                      const dc = ex.difficulty === "beginner" ? "#22c55e" : ex.difficulty === "advanced" ? "#ef4444" : "#f59e0b";
+                      return (
+                        <span style={{ fontSize: 9, letterSpacing: 0.5, textTransform: "uppercase", background: dc + "22", border: `1px solid ${dc}44`, borderRadius: 4, padding: "1px 6px", color: dc }}>
+                          {ex.difficulty}
+                        </span>
+                      );
+                    })()}
                     {search && catMeta && (
                       <span style={{
                         fontSize: 9, letterSpacing: 1, textTransform: "uppercase",
@@ -1149,6 +1197,24 @@ export default function App() {
               )}
             </div>
 
+            {/* Progression banner */}
+            {missionStartDate && dayExercises.length > 0 && (
+              <div style={{
+                background: "var(--mission-surface)", border: "1px solid #e85d2633",
+                borderRadius: 10, padding: "10px 14px", marginBottom: 10,
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div>
+                  <div style={{ fontSize: 9, color: "#e85d26", letterSpacing: 2, textTransform: "uppercase", marginBottom: 2 }}>{weekProg.label} · {weekProg.sub}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>{weekProg.note}</div>
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 12 }}>
+                  <div style={{ fontSize: 20, fontWeight: "bold", color: "#e85d26", lineHeight: 1 }}>{weekProg.sets}×{weekProg.reps}</div>
+                  <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 0.5 }}>target</div>
+                </div>
+              </div>
+            )}
+
             {/* Warm-up callout */}
             {dayData?.warmup && WARMUP_PRESETS[dayData.warmup] && (
               <div style={{
@@ -1201,6 +1267,22 @@ export default function App() {
                           )}
                         </div>
                         <div style={{ fontSize: 11, color: "var(--muted)" }}>{ex.sets} · {ex.notes}</div>
+                        {warn && !allDone && ex.substitutes?.length > 0 && (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              const sub = Object.values(ALL_EXERCISES).flatMap(c => c.exercises).find(e => e.name === ex.substitutes[0]);
+                              if (sub) setDemoEx(sub);
+                            }}
+                            style={{
+                              marginTop: 6, background: "none", border: "none", padding: 0,
+                              color: "#f59e0b", fontSize: 11, cursor: "pointer", fontFamily: "inherit",
+                              display: "flex", alignItems: "center", gap: 4,
+                            }}
+                          >
+                            ↪ Safer option: {ex.substitutes[0]}
+                          </button>
+                        )}
                       </div>
                       <button
                         onClick={e => { e.stopPropagation(); setDemoEx(ex); }}
@@ -1413,6 +1495,37 @@ export default function App() {
                   );
                 })}
               </div>
+            </div>
+
+            <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8, marginTop: 4 }}>Training Environment</div>
+            <div style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 12 }}>
+              Tells the app what equipment you have access to.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 24 }}>
+              {GYM_TYPES.map(g => {
+                const active = (prefs.gymType || "bodyweight") === g.key;
+                return (
+                  <div key={g.key} onClick={() => setPrefs(p => ({ ...p, gymType: g.key }))} style={{
+                    background: active ? "var(--success-surface)" : "var(--surface)",
+                    border: `1px solid ${active ? "#22c55e66" : "var(--border)"}`,
+                    borderRadius: 11, padding: "13px 15px",
+                    display: "flex", alignItems: "center", gap: 13, cursor: "pointer",
+                  }}>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
+                      border: `2px solid ${active ? "#22c55e" : "var(--border3)"}`,
+                      background: active ? "#22c55e" : "transparent",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {active && <span style={{ fontSize: 10, color: "#000", fontWeight: "bold" }}>✓</span>}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: "bold", color: active ? "#22c55e" : "var(--text)", marginBottom: 2 }}>{g.label}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{g.note}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>Physical Limitations</div>
