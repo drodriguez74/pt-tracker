@@ -1,4 +1,12 @@
 import { useState, useEffect } from "react";
+import { GiMuscleUp, GiWeightLiftingUp, GiLeg, GiBodyHeight, GiRunningShoe, GiMeditation } from "react-icons/gi";
+import { FaDumbbell, FaFire } from "react-icons/fa";
+import { FiSun, FiMoon } from "react-icons/fi";
+
+function CatIcon({ icon: IconComp, size = 18, color, style }) {
+  if (!IconComp) return null;
+  return <IconComp size={size} color={color} style={style} />;
+}
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
 
@@ -59,7 +67,7 @@ const AILMENTS = [
 
 const ALL_EXERCISES = {
   pushVariations: {
-    label: "Push Variations", color: "#e85d26", icon: "💪",
+    label: "Push Variations", color: "#e85d26", icon: GiMuscleUp,
     exercises: [
       { name: "Standard Push-up", sets: "3x10", notes: "Elbows at 45°, core tight", caution: ["wrists"] },
       { name: "Incline Push-up", sets: "3x12", notes: "Hands on wall or bench — easiest on shoulders" },
@@ -76,7 +84,7 @@ const ALL_EXERCISES = {
     ],
   },
   pullVariations: {
-    label: "Pull & Row Variations", color: "#8b5cf6", icon: "🔙",
+    label: "Pull & Row Variations", color: "#8b5cf6", icon: GiWeightLiftingUp,
     exercises: [
       { name: "Pull-up (overhand)", sets: "3x5", notes: "Use a bar — full range", caution: ["shoulders"] },
       { name: "Chin-up (underhand)", sets: "3x5", notes: "Easier on shoulders than pull-up" },
@@ -90,7 +98,7 @@ const ALL_EXERCISES = {
     ],
   },
   dipsTriCeps: {
-    label: "Dips & Triceps", color: "#f59e0b", icon: "↕️",
+    label: "Dips & Triceps", color: "#f59e0b", icon: FaDumbbell,
     exercises: [
       { name: "Bench Dip (shallow)", sets: "3x10", notes: "Limit depth to protect shoulders", caution: ["shoulders"] },
       { name: "Chair Dip", sets: "3x10", notes: "Use a sturdy chair — keep elbows back", caution: ["shoulders"] },
@@ -99,7 +107,7 @@ const ALL_EXERCISES = {
     ],
   },
   core: {
-    label: "Core & Abs", color: "#ef4444", icon: "🔥",
+    label: "Core & Abs", color: "#ef4444", icon: FaFire,
     exercises: [
       { name: "Dead Bug", sets: "3x10", notes: "Best core exercise for back issues" },
       { name: "Bird Dog", sets: "3x10/side", notes: "Core stability — spine neutral" },
@@ -122,7 +130,7 @@ const ALL_EXERCISES = {
     ],
   },
   lowerBody: {
-    label: "Lower Body", color: "#2d6a4f", icon: "🦵",
+    label: "Lower Body", color: "#22c55e", icon: GiLeg,
     exercises: [
       // Hinge pattern first — was buried at positions 13-14, now 0-1
       { name: "Romanian Deadlift (BW)", sets: "3x10", notes: "Hip hinge — back flat, push hips back", caution: ["lowerBack"] },
@@ -146,7 +154,7 @@ const ALL_EXERCISES = {
     ],
   },
   back: {
-    label: "Back & Posture", color: "#0ea5e9", icon: "🧍",
+    label: "Back & Posture", color: "#0ea5e9", icon: GiBodyHeight,
     exercises: [
       { name: "Superman", sets: "3x10", notes: "Lower back — hold 2 sec at top", caution: ["lowerBack"] },
       { name: "Reverse Snow Angel", sets: "3x10", notes: "Prone — rear delts and upper back" },
@@ -158,7 +166,7 @@ const ALL_EXERCISES = {
     ],
   },
   cardioConditioning: {
-    label: "Cardio & Conditioning", color: "#1a3a5c", icon: "💨",
+    label: "Cardio & Conditioning", color: "#3b82f6", icon: GiRunningShoe,
     exercises: [
       { name: "March in Place", sets: "3x60s", notes: "Warm-up / cool-down staple" },
       { name: "Low-Impact Jumping Jacks", sets: "3x30s", notes: "Step side-to-side — no jumping" },
@@ -175,7 +183,7 @@ const ALL_EXERCISES = {
     ],
   },
   mobilityWarmup: {
-    label: "Mobility & Warm-Up", color: "#10b981", icon: "🧘",
+    label: "Mobility & Warm-Up", color: "#10b981", icon: GiMeditation,
     exercises: [
       { name: "Arm Circles (forward & back)", sets: "2x10/dir", notes: "Shoulder warm-up — essential before pushing" },
       { name: "Shoulder Rolls", sets: "2x10/dir", notes: "Loosens shoulder joint" },
@@ -608,7 +616,7 @@ const EXERCISE_DEMOS = {
 // - warmup key maps to WARMUP_PRESETS
 const weekSchedule = [
   { day: "MON", focus: "Upper Body",   color: "#e85d26", cats: ["pushVariations", "dipsTriCeps"],               catCounts: [3, 2], warmup: "upper" },
-  { day: "TUE", focus: "Core + Lower", color: "#2d6a4f", cats: ["core", "lowerBody"],                           catCounts: [3, 3], warmup: "lower" },
+  { day: "TUE", focus: "Core + Lower", color: "#22c55e", cats: ["core", "lowerBody"],                           catCounts: [3, 3], warmup: "lower" },
   { day: "WED", focus: "Rest",         color: "var(--muted)",    cats: [] },
   { day: "THU", focus: "Full Body",    color: "#8b5cf6", cats: ["pushVariations", "pullVariations", "lowerBody", "core"], catCounts: [2, 2, 2, 2], warmup: "full" },
   { day: "FRI", focus: "Back + Cardio",color: "#0ea5e9", cats: ["back", "cardioConditioning"],                  catCounts: [4, 3], warmup: "lower" },
@@ -778,7 +786,7 @@ export default function App() {
 
   const inputStyle = {
     width: "100%", boxSizing: "border-box",
-    background: "var(--surface0)", border: "1px solid #252525",
+    background: "var(--surface0)", border: "1px solid var(--border2)",
     borderRadius: 10, padding: "10px 14px",
     color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none",
   };
@@ -822,7 +830,7 @@ export default function App() {
                   value={prefs.name}
                   onChange={e => setPrefs(p => ({ ...p, name: e.target.value }))}
                   placeholder="Enter name"
-                  style={{ width: "100%", boxSizing: "border-box", background: "var(--surface0)", border: "1px solid #252525", borderRadius: 10, padding: "12px 14px", color: "var(--text)", fontSize: 15, fontFamily: "inherit", outline: "none" }}
+                  style={{ width: "100%", boxSizing: "border-box", background: "var(--surface0)", border: "1px solid var(--border2)", borderRadius: 10, padding: "12px 14px", color: "var(--text)", fontSize: 15, fontFamily: "inherit", outline: "none" }}
                 />
               </div>
 
@@ -896,7 +904,7 @@ export default function App() {
             {stepDots}
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setOnboardStep(2)} style={{
-                flex: 1, padding: "15px", borderRadius: 12, border: "1px solid #252525",
+                flex: 1, padding: "15px", borderRadius: 12, border: "1px solid var(--border2)",
                 background: "transparent", color: "var(--muted)", fontSize: 14,
                 fontFamily: "inherit", cursor: "pointer",
               }}>Skip</button>
@@ -930,7 +938,7 @@ export default function App() {
                 { week: "Week 4", goal: "Core stronger. Posture visibly improved.", icon: "🎯" },
               ].map((m, i) => (
                 <div key={i} style={{
-                  background: "var(--surface)", border: "1px solid #1e1e1e",
+                  background: "var(--surface)", border: "1px solid var(--border)",
                   borderRadius: 11, padding: "14px 16px", marginBottom: 8,
                   display: "flex", alignItems: "center", gap: 14,
                 }}>
@@ -942,7 +950,7 @@ export default function App() {
                 </div>
               ))}
 
-              <div style={{ background: "var(--surface)", border: "1px solid #1e1e1e", borderRadius: 11, padding: "14px 16px", marginTop: 8 }}>
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 11, padding: "14px 16px", marginTop: 8 }}>
                 <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
                   📅 Your schedule focuses on <strong style={{ color: "var(--text)" }}>Upper, Core/Lower, and Full Body</strong> days with built-in rest. Warm-ups are included.
                 </div>
@@ -966,7 +974,7 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: "'Barlow Condensed', sans-serif", maxWidth: 480, margin: "0 auto" }}>
 
       {/* ── Header ── */}
-      <div style={{ background: "var(--header-bg)", borderBottom: "1px solid #1e1e1e", padding: "20px 18px 14px", position: "sticky", top: 0, zIndex: 20 }}>
+      <div style={{ background: "var(--header-bg)", borderBottom: "1px solid var(--border)", padding: "20px 18px 14px", position: "sticky", top: 0, zIndex: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
           <div>
             {prefs.name && (
@@ -982,11 +990,12 @@ export default function App() {
               title="Toggle theme"
               style={{
                 background: "var(--surface2)", border: "1px solid var(--border2)",
-                borderRadius: 10, width: 40, height: 40, fontSize: 18,
+                borderRadius: 10, width: 36, height: 36,
                 cursor: "pointer", flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
+                color: "var(--muted)",
               }}
-            >{theme === "dark" ? "☀️" : "🌙"}</button>
+            >{theme === "dark" ? <FiSun size={16} /> : <FiMoon size={16} />}</button>
             <div style={{ textAlign: "right", background: "var(--surface2)", border: "1px solid var(--border2)", borderRadius: 10, padding: "8px 12px" }}>
               <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 1 }}>EXERCISES</div>
               <div style={{ fontSize: 22, fontWeight: "bold", color: "#e85d26" }}>{totalExercises}</div>
@@ -1036,7 +1045,7 @@ export default function App() {
                     color: selectedCat === cat.key ? cat.color : "var(--muted3)",
                     fontSize: 11, fontFamily: "inherit", cursor: "pointer",
                   }}>
-                    {cat.icon} {cat.label} ({cat.exercises.length})
+                    <CatIcon icon={cat.icon} size={13} color={selectedCat === cat.key ? cat.color : "var(--muted3)"} /> {cat.label} ({cat.exercises.length})
                   </button>
                 ))}
               </div>
@@ -1050,42 +1059,47 @@ export default function App() {
 
             {filteredExercises.map((ex, idx) => {
               const warn = hasCaution(ex);
-              // Fix: use the exercise's own category icon, not selectedCat (search crosses categories)
               const catKey = search ? (exerciseCategoryMap[ex.name] ?? selectedCat) : selectedCat;
+              const catMeta = ALL_EXERCISES[catKey];
               return (
                 <div key={idx} style={{
                   background: warn ? "var(--warn-surface)" : "var(--surface)",
                   border: `1px solid ${warn ? "#f59e0b44" : "var(--border)"}`,
                   borderRadius: 11, padding: "13px 15px", marginBottom: 8,
-                  display: "flex", alignItems: "center", gap: 12,
                 }}>
-                  <span style={{ fontSize: 22 }}>{ALL_EXERCISES[catKey]?.icon || "⚡"}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
-                      <span style={{ fontSize: 14, fontWeight: "bold" }}>{ex.name}</span>
-                      {warn && (
-                        <span style={{
-                          fontSize: 9, letterSpacing: 1, textTransform: "uppercase",
-                          background: "#f59e0b22", border: "1px solid #f59e0b55",
-                          borderRadius: 4, padding: "1px 5px", color: "#f59e0b",
-                        }}>Modify</span>
-                      )}
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+                    <span style={{ fontSize: 14, fontWeight: "bold" }}>{ex.name}</span>
+                    {search && catMeta && (
+                      <span style={{
+                        fontSize: 9, letterSpacing: 1, textTransform: "uppercase",
+                        background: catMeta.color + "22", border: `1px solid ${catMeta.color}44`,
+                        borderRadius: 4, padding: "1px 6px", color: catMeta.color,
+                      }}>{catMeta.label}</span>
+                    )}
+                    {warn && (
+                      <span style={{
+                        fontSize: 9, letterSpacing: 1, textTransform: "uppercase",
+                        background: "#f59e0b22", border: "1px solid #f59e0b55",
+                        borderRadius: 4, padding: "1px 5px", color: "#f59e0b",
+                      }}>Modify</span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                      <span style={{ background: "var(--surface3)", border: "1px solid #2a2a2a", borderRadius: 5, padding: "2px 7px", fontSize: 11, color: "#e85d26" }}>{ex.sets}</span>
+                      <span style={{ background: "var(--surface3)", border: "1px solid var(--border3)", borderRadius: 5, padding: "2px 7px", fontSize: 11, color: "#e85d26" }}>{ex.sets}</span>
                       <span style={{ fontSize: 11, color: "var(--muted)" }}>{ex.notes}</span>
                     </div>
+                    <button
+                      onClick={() => setDemoEx(ex)}
+                      title="How to perform"
+                      style={{
+                        background: "none", border: "1px solid var(--border2)", borderRadius: 7,
+                        width: 28, height: 28, color: "var(--muted)", fontSize: 13,
+                        cursor: "pointer", flexShrink: 0, fontFamily: "inherit",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}
+                    >ⓘ</button>
                   </div>
-                  <button
-                    onClick={() => setDemoEx(ex)}
-                    title="How to perform"
-                    style={{
-                      background: "none", border: "1px solid #252525", borderRadius: 7,
-                      width: 30, height: 30, color: "var(--muted)", fontSize: 14,
-                      cursor: "pointer", flexShrink: 0, fontFamily: "inherit",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}
-                  >ⓘ</button>
                 </div>
               );
             })}
@@ -1103,7 +1117,7 @@ export default function App() {
                   minWidth: 50, padding: "9px 4px", borderRadius: 9, border: "1px solid",
                   borderColor: selectedDay === d.day ? d.color : "var(--border)",
                   background: selectedDay === d.day ? d.color : "var(--surface)",
-                  color: selectedDay === d.day ? "#fff" : "#555",
+                  color: selectedDay === d.day ? "#fff" : "var(--muted)",
                   fontSize: 10, fontFamily: "inherit", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1,
                 }}>
                   <div style={{ fontWeight: "bold" }}>{d.day}</div>
@@ -1142,7 +1156,7 @@ export default function App() {
                 borderRadius: 10, padding: "10px 14px", marginBottom: 12,
                 display: "flex", alignItems: "center", gap: 10,
               }}>
-                <span style={{ fontSize: 18 }}>🧘</span>
+                <GiMeditation size={20} color="#10b981" />
                 <div>
                   <div style={{ fontSize: 10, color: "#10b981", letterSpacing: 2, textTransform: "uppercase", marginBottom: 2 }}>Warm-up first — 2–3 min</div>
                   <div style={{ fontSize: 11, color: "var(--muted3)" }}>{WARMUP_PRESETS[dayData.warmup]}</div>
@@ -1164,7 +1178,7 @@ export default function App() {
                 return (
                   <div key={idx} style={{
                     background: allDone ? "var(--success-surface)" : warn ? "var(--warn-surface)" : "var(--surface)",
-                    border: `1px solid ${allDone ? "#2d6a4f" : warn ? "#f59e0b44" : "var(--border)"}`,
+                    border: `1px solid ${allDone ? "var(--done-border)" : warn ? "#f59e0b44" : "var(--border)"}`,
                     borderRadius: 11, marginBottom: 8, overflow: "hidden",
                   }}>
                     <div onClick={() => setExpanded(isExp ? null : ex.name)} style={{
@@ -1192,7 +1206,7 @@ export default function App() {
                         onClick={e => { e.stopPropagation(); setDemoEx(ex); }}
                         title="How to perform"
                         style={{
-                          background: "none", border: "1px solid #252525", borderRadius: 7,
+                          background: "none", border: "1px solid var(--border2)", borderRadius: 7,
                           width: 28, height: 28, color: "var(--muted)", fontSize: 13,
                           cursor: "pointer", flexShrink: 0, fontFamily: "inherit",
                           display: "flex", alignItems: "center", justifyContent: "center",
@@ -1213,7 +1227,7 @@ export default function App() {
                                 flex: 1, padding: "11px 0", borderRadius: 9,
                                 border: `2px solid ${done ? "#4ade80" : "var(--border2)"}`,
                                 background: done ? "var(--success-surface2)" : "var(--surface2)",
-                                color: done ? "#4ade80" : "#555",
+                                color: done ? "#4ade80" : "var(--muted)",
                                 fontSize: 13, fontFamily: "inherit", cursor: "pointer",
                               }}>
                                 {done ? "✓" : `Set ${s}`}
@@ -1238,7 +1252,7 @@ export default function App() {
             {/* Streak card */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
               {[
-                { label: "Current Streak", value: streak.current, unit: streak.current === 1 ? "day" : "days", color: streak.current > 0 ? "#e85d26" : "#444" },
+                { label: "Current Streak", value: streak.current, unit: streak.current === 1 ? "day" : "days", color: streak.current > 0 ? "#e85d26" : "var(--muted)" },
                 { label: "Best Streak", value: streak.best, unit: streak.best === 1 ? "day" : "days", color: "#8b5cf6" },
                 { label: "Total Workouts", value: streak.total, unit: "done", color: "#10b981" },
               ].map((s, i) => (
@@ -1302,7 +1316,7 @@ export default function App() {
                     border: `1px solid ${isDone ? d.color + "66" : d.cats.length > 0 ? "var(--border)" : "var(--border-subtle)"}`,
                     borderRadius: 9, padding: "9px 0",
                   }}>
-                    <div style={{ fontSize: 9, color: isDone ? d.color : "#444", letterSpacing: 1 }}>{d.day}</div>
+                    <div style={{ fontSize: 9, color: isDone ? d.color : "var(--muted)", letterSpacing: 1 }}>{d.day}</div>
                     <div style={{ fontSize: 16, marginTop: 5 }}>
                       {d.cats.length === 0 ? "😴" : isDone ? "✅" : "⬜"}
                     </div>
@@ -1316,7 +1330,7 @@ export default function App() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
               {categories.map(cat => (
                 <div key={cat.key} style={{ background: "var(--surface)", border: `1px solid ${cat.color}33`, borderRadius: 11, padding: "14px", textAlign: "center" }}>
-                  <div style={{ fontSize: 20 }}>{cat.icon}</div>
+                  <div style={{ display: "flex", justifyContent: "center" }}><CatIcon icon={cat.icon} size={20} color={cat.color} /></div>
                   <div style={{ fontSize: 22, fontWeight: "bold", color: cat.color, marginTop: 4 }}>{cat.exercises.length}</div>
                   <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>{cat.label}</div>
                 </div>
@@ -1330,7 +1344,7 @@ export default function App() {
               { week: "Week 3", goal: "Noticeable strength in push-ups & squats", icon: "💪" },
               { week: "Week 4", goal: "Core stronger, posture visibly improved", icon: "🎯" },
             ].map((m, i) => (
-              <div key={i} style={{ background: "var(--surface)", border: "1px solid #1e1e1e", borderRadius: 11, padding: "13px 15px", marginBottom: 8, display: "flex", alignItems: "center", gap: 13 }}>
+              <div key={i} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 11, padding: "13px 15px", marginBottom: 8, display: "flex", alignItems: "center", gap: 13 }}>
                 <span style={{ fontSize: 26 }}>{m.icon}</span>
                 <div>
                   <div style={{ fontSize: 12, color: "#e85d26", marginBottom: 3, letterSpacing: 1 }}>{m.week}</div>
@@ -1356,7 +1370,7 @@ export default function App() {
             )}
 
             {activeAilments.length === 0 && (
-              <div style={{ background: "var(--surface)", border: "1px solid #1e1e1e", borderRadius: 11, padding: "16px", marginTop: 18, textAlign: "center", color: "var(--muted2)", fontSize: 12 }}>
+              <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 11, padding: "16px", marginTop: 18, textAlign: "center", color: "var(--muted2)", fontSize: 12 }}>
                 No modifications set.{" "}
                 <span onClick={() => setActiveTab("settings")} style={{ color: "#e85d26", cursor: "pointer" }}>
                   Add ailments in Settings →
@@ -1436,7 +1450,7 @@ export default function App() {
               onClick={restartMission}
               style={{
                 width: "100%", padding: "13px", borderRadius: 11, marginBottom: 8,
-                border: "1px solid #252525", background: "transparent",
+                border: "1px solid var(--border2)", background: "transparent",
                 color: "var(--muted)", fontSize: 13, fontFamily: "inherit", cursor: "pointer", letterSpacing: 1,
               }}
             >
@@ -1487,20 +1501,20 @@ export default function App() {
           >
             <div
               onClick={e => e.stopPropagation()}
-              style={{ background: "var(--surface)", border: "1px solid #1e1e1e", borderRadius: "20px 20px 0 0", padding: "22px 20px 36px", width: "100%", maxWidth: 480, maxHeight: "82vh", overflowY: "auto" }}
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "20px 20px 0 0", padding: "22px 20px 36px", width: "100%", maxWidth: 480, maxHeight: "82vh", overflowY: "auto" }}
             >
               {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
                 <div style={{ flex: 1, paddingRight: 12 }}>
                   <div style={{ fontSize: 9, color: catColor, letterSpacing: 3, textTransform: "uppercase", marginBottom: 5 }}>
-                    {ALL_EXERCISES[catKey]?.icon} {ALL_EXERCISES[catKey]?.label}
+                    <CatIcon icon={ALL_EXERCISES[catKey]?.icon} size={12} color={catColor} style={{ verticalAlign: "middle", marginRight: 4 }} />{ALL_EXERCISES[catKey]?.label}
                   </div>
                   <div style={{ fontSize: 18, fontWeight: "bold", lineHeight: 1.2 }}>{demoEx.name}</div>
                   <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>{demoEx.sets} · {demoEx.notes}</div>
                 </div>
                 <button
                   onClick={() => setDemoEx(null)}
-                  style={{ background: "var(--surface3)", border: "1px solid #252525", borderRadius: 8, width: 32, height: 32, color: "var(--muted3)", fontSize: 16, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
+                  style={{ background: "var(--surface3)", border: "1px solid var(--border2)", borderRadius: 8, width: 32, height: 32, color: "var(--muted3)", fontSize: 16, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
                 >✕</button>
               </div>
 
@@ -1513,7 +1527,7 @@ export default function App() {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 11, color: catColor, fontWeight: "bold",
                   }}>{i + 1}</div>
-                  <div style={{ fontSize: 13, color: "#ccc", lineHeight: 1.55, paddingTop: 3 }}>{step}</div>
+                  <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.55, paddingTop: 3 }}>{step}</div>
                 </div>
               ))}
 
