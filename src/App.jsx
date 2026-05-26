@@ -609,11 +609,11 @@ const EXERCISE_DEMOS = {
 const weekSchedule = [
   { day: "MON", focus: "Upper Body",   color: "#e85d26", cats: ["pushVariations", "dipsTriCeps"],               catCounts: [3, 2], warmup: "upper" },
   { day: "TUE", focus: "Core + Lower", color: "#2d6a4f", cats: ["core", "lowerBody"],                           catCounts: [3, 3], warmup: "lower" },
-  { day: "WED", focus: "Rest",         color: "#888",    cats: [] },
+  { day: "WED", focus: "Rest",         color: "var(--muted)",    cats: [] },
   { day: "THU", focus: "Full Body",    color: "#8b5cf6", cats: ["pushVariations", "pullVariations", "lowerBody", "core"], catCounts: [2, 2, 2, 2], warmup: "full" },
   { day: "FRI", focus: "Back + Cardio",color: "#0ea5e9", cats: ["back", "cardioConditioning"],                  catCounts: [4, 3], warmup: "lower" },
   { day: "SAT", focus: "Core + Mobility", color: "#10b981", cats: ["core", "mobilityWarmup"],                   catCounts: [3, 3] },
-  { day: "SUN", focus: "Rest",         color: "#888",    cats: [] },
+  { day: "SUN", focus: "Rest",         color: "var(--muted)",    cats: [] },
 ];
 
 const totalExercises = Object.values(ALL_EXERCISES).reduce((sum, cat) => sum + cat.exercises.length, 0);
@@ -638,6 +638,11 @@ const DEFAULT_PREFS = { name: "", ageRange: "", ailments: [] };
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const [theme, setTheme] = useState(() => {
+    const t = loadStorage("pt-theme", "dark");
+    document.documentElement.setAttribute("data-theme", t);
+    return t;
+  });
   const [onboarded, setOnboarded] = useState(() =>
     localStorage.getItem("pt-onboarded") === "true" ||
     localStorage.getItem("pt-mission-start") !== null
@@ -686,6 +691,11 @@ export default function App() {
   ).length;
 
   // ── Persistence effects ────────────────────────────────────────────────────
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("pt-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     localStorage.setItem("pt-completed", JSON.stringify(completed));
@@ -768,9 +778,9 @@ export default function App() {
 
   const inputStyle = {
     width: "100%", boxSizing: "border-box",
-    background: "#111", border: "1px solid #252525",
+    background: "var(--surface0)", border: "1px solid #252525",
     borderRadius: 10, padding: "10px 14px",
-    color: "#f0ede8", fontSize: 14, fontFamily: "inherit", outline: "none",
+    color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none",
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -782,7 +792,7 @@ export default function App() {
         {[0, 1, 2].map(i => (
           <div key={i} style={{
             width: i === onboardStep ? 20 : 6, height: 6, borderRadius: 3,
-            background: i === onboardStep ? "#e85d26" : "#252525",
+            background: i === onboardStep ? "#e85d26" : "var(--border2)",
             transition: "width 0.3s ease",
           }} />
         ))}
@@ -790,7 +800,7 @@ export default function App() {
     );
 
     return (
-      <div style={{ minHeight: "100vh", background: "#080808", color: "#f0ede8", fontFamily: "'Georgia', serif", maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", padding: "48px 24px 40px" }}>
+      <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: "'Barlow Condensed', sans-serif", maxWidth: 480, margin: "0 auto", display: "flex", flexDirection: "column", padding: "48px 24px 40px" }}>
 
         {/* Step 0 — Welcome */}
         {onboardStep === 0 && (
@@ -800,33 +810,33 @@ export default function App() {
                 <div style={{ fontSize: 52, marginBottom: 14 }}>🪖</div>
                 <div style={{ fontSize: 10, letterSpacing: 5, color: "#e85d26", textTransform: "uppercase", marginBottom: 10 }}>Operation Fit</div>
                 <div style={{ fontSize: 26, fontWeight: "bold", lineHeight: 1.2, marginBottom: 12 }}>Military-Style Calisthenics</div>
-                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
                   Low-impact. Consistent. Built for the long game.<br />
                   3 sets of 10. No gym required.
                 </div>
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: "#888", textTransform: "uppercase", marginBottom: 8 }}>Your name (optional)</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted)", textTransform: "uppercase", marginBottom: 8 }}>Your name (optional)</div>
                 <input
                   value={prefs.name}
                   onChange={e => setPrefs(p => ({ ...p, name: e.target.value }))}
                   placeholder="Enter name"
-                  style={{ width: "100%", boxSizing: "border-box", background: "#111", border: "1px solid #252525", borderRadius: 10, padding: "12px 14px", color: "#f0ede8", fontSize: 15, fontFamily: "inherit", outline: "none" }}
+                  style={{ width: "100%", boxSizing: "border-box", background: "var(--surface0)", border: "1px solid #252525", borderRadius: 10, padding: "12px 14px", color: "var(--text)", fontSize: 15, fontFamily: "inherit", outline: "none" }}
                 />
               </div>
 
               <div>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: "#888", textTransform: "uppercase", marginBottom: 10 }}>Age range</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: "var(--muted)", textTransform: "uppercase", marginBottom: 10 }}>Age range</div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {AGE_RANGES.map(range => {
                     const active = prefs.ageRange === range;
                     return (
                       <button key={range} onClick={() => setPrefs(p => ({ ...p, ageRange: active ? "" : range }))} style={{
                         padding: "9px 18px", borderRadius: 20, border: "1px solid",
-                        borderColor: active ? "#e85d26" : "#252525",
+                        borderColor: active ? "#e85d26" : "var(--border2)",
                         background: active ? "#e85d2622" : "transparent",
-                        color: active ? "#e85d26" : "#888",
+                        color: active ? "#e85d26" : "var(--muted)",
                         fontSize: 14, fontFamily: "inherit", cursor: "pointer",
                       }}>{range}</button>
                     );
@@ -852,7 +862,7 @@ export default function App() {
               <div style={{ marginBottom: 28 }}>
                 <div style={{ fontSize: 10, letterSpacing: 4, color: "#e85d26", textTransform: "uppercase", marginBottom: 10 }}>Step 2 of 3</div>
                 <div style={{ fontSize: 22, fontWeight: "bold", marginBottom: 8 }}>Any Physical Limitations?</div>
-                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.6 }}>
+                <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
                   Exercises that match your selections will show a <span style={{ color: "#f59e0b" }}>Modify</span> badge so you can adapt safely. You can always update this in Settings.
                 </div>
               </div>
@@ -861,8 +871,8 @@ export default function App() {
                 const active = prefs.ailments.includes(a.key);
                 return (
                   <div key={a.key} onClick={() => toggleAilment(a.key)} style={{
-                    background: active ? "#120e00" : "#0f0f0f",
-                    border: `1px solid ${active ? "#f59e0b66" : "#1e1e1e"}`,
+                    background: active ? "var(--warn-surface)" : "var(--surface)",
+                    border: `1px solid ${active ? "#f59e0b66" : "var(--border)"}`,
                     borderRadius: 11, padding: "13px 15px", marginBottom: 8,
                     display: "flex", alignItems: "center", gap: 13, cursor: "pointer",
                   }}>
@@ -875,8 +885,8 @@ export default function App() {
                       {active && <span style={{ fontSize: 11, color: "#000", fontWeight: "bold" }}>✓</span>}
                     </div>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: "bold", color: active ? "#f59e0b" : "#f0ede8", marginBottom: 2 }}>{a.label}</div>
-                      <div style={{ fontSize: 11, color: "#888" }}>{a.note}</div>
+                      <div style={{ fontSize: 14, fontWeight: "bold", color: active ? "#f59e0b" : "var(--text)", marginBottom: 2 }}>{a.label}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{a.note}</div>
                     </div>
                   </div>
                 );
@@ -887,7 +897,7 @@ export default function App() {
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setOnboardStep(2)} style={{
                 flex: 1, padding: "15px", borderRadius: 12, border: "1px solid #252525",
-                background: "transparent", color: "#888", fontSize: 14,
+                background: "transparent", color: "var(--muted)", fontSize: 14,
                 fontFamily: "inherit", cursor: "pointer",
               }}>Skip</button>
               <button onClick={() => setOnboardStep(2)} style={{
@@ -908,8 +918,8 @@ export default function App() {
                 <div style={{ fontSize: 48, marginBottom: 14 }}>🎖️</div>
                 <div style={{ fontSize: 10, letterSpacing: 4, color: "#e85d26", textTransform: "uppercase", marginBottom: 10 }}>Step 3 of 3</div>
                 <div style={{ fontSize: 24, fontWeight: "bold", marginBottom: 10 }}>Your 30-Day Mission</div>
-                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.7 }}>
-                  Complete <strong style={{ color: "#f0ede8" }}>20 workouts</strong> in 30 days.<br />
+                <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.7 }}>
+                  Complete <strong style={{ color: "var(--text)" }}>20 workouts</strong> in 30 days.<br />
                   3 sets of 10. Low impact. Every rep counts.
                 </div>
               </div>
@@ -920,21 +930,21 @@ export default function App() {
                 { week: "Week 4", goal: "Core stronger. Posture visibly improved.", icon: "🎯" },
               ].map((m, i) => (
                 <div key={i} style={{
-                  background: "#0f0f0f", border: "1px solid #1e1e1e",
+                  background: "var(--surface)", border: "1px solid #1e1e1e",
                   borderRadius: 11, padding: "14px 16px", marginBottom: 8,
                   display: "flex", alignItems: "center", gap: 14,
                 }}>
                   <span style={{ fontSize: 24 }}>{m.icon}</span>
                   <div>
                     <div style={{ fontSize: 11, color: "#e85d26", letterSpacing: 1, marginBottom: 3 }}>{m.week}</div>
-                    <div style={{ fontSize: 13, color: "#f0ede8" }}>{m.goal}</div>
+                    <div style={{ fontSize: 13, color: "var(--text)" }}>{m.goal}</div>
                   </div>
                 </div>
               ))}
 
-              <div style={{ background: "#0f0f0f", border: "1px solid #1e1e1e", borderRadius: 11, padding: "14px 16px", marginTop: 8 }}>
-                <div style={{ fontSize: 12, color: "#888", lineHeight: 1.6 }}>
-                  📅 Your schedule focuses on <strong style={{ color: "#f0ede8" }}>Upper, Core/Lower, and Full Body</strong> days with built-in rest. Warm-ups are included.
+              <div style={{ background: "var(--surface)", border: "1px solid #1e1e1e", borderRadius: 11, padding: "14px 16px", marginTop: 8 }}>
+                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+                  📅 Your schedule focuses on <strong style={{ color: "var(--text)" }}>Upper, Core/Lower, and Full Body</strong> days with built-in rest. Warm-ups are included.
                 </div>
               </div>
             </div>
@@ -953,10 +963,10 @@ export default function App() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080808", color: "#f0ede8", fontFamily: "'Georgia', serif", maxWidth: 480, margin: "0 auto" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: "'Barlow Condensed', sans-serif", maxWidth: 480, margin: "0 auto" }}>
 
       {/* ── Header ── */}
-      <div style={{ background: "#0d0d0d", borderBottom: "1px solid #1e1e1e", padding: "20px 18px 14px", position: "sticky", top: 0, zIndex: 20 }}>
+      <div style={{ background: "var(--header-bg)", borderBottom: "1px solid #1e1e1e", padding: "20px 18px 14px", position: "sticky", top: 0, zIndex: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
           <div>
             {prefs.name && (
@@ -966,9 +976,21 @@ export default function App() {
             )}
             <div style={{ fontSize: 22, fontWeight: "bold", letterSpacing: -0.5 }}>Military Calisthenics</div>
           </div>
-          <div style={{ textAlign: "right", background: "#161616", border: "1px solid #252525", borderRadius: 10, padding: "8px 12px" }}>
-            <div style={{ fontSize: 10, color: "#666", letterSpacing: 1 }}>EXERCISES</div>
-            <div style={{ fontSize: 22, fontWeight: "bold", color: "#e85d26" }}>{totalExercises}</div>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <button
+              onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}
+              title="Toggle theme"
+              style={{
+                background: "var(--surface2)", border: "1px solid var(--border2)",
+                borderRadius: 10, width: 40, height: 40, fontSize: 18,
+                cursor: "pointer", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >{theme === "dark" ? "☀️" : "🌙"}</button>
+            <div style={{ textAlign: "right", background: "var(--surface2)", border: "1px solid var(--border2)", borderRadius: 10, padding: "8px 12px" }}>
+              <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 1 }}>EXERCISES</div>
+              <div style={{ fontSize: 22, fontWeight: "bold", color: "#e85d26" }}>{totalExercises}</div>
+            </div>
           </div>
         </div>
         <div style={{ display: "flex", gap: 5 }}>
@@ -982,7 +1004,7 @@ export default function App() {
               flex: 1, padding: "7px 0", borderRadius: 7, border: "1px solid",
               borderColor: activeTab === t.key ? "#e85d26" : "#222",
               background: activeTab === t.key ? "#e85d26" : "transparent",
-              color: activeTab === t.key ? "#fff" : "#666",
+              color: activeTab === t.key ? "#fff" : "var(--muted3)",
               fontSize: 11, fontFamily: "inherit", cursor: "pointer",
               letterSpacing: 0.5, textTransform: "uppercase",
             }}>{t.label}</button>
@@ -1009,9 +1031,9 @@ export default function App() {
                 {categories.map(cat => (
                   <button key={cat.key} onClick={() => setSelectedCat(cat.key)} style={{
                     whiteSpace: "nowrap", padding: "7px 12px", borderRadius: 20, border: "1px solid",
-                    borderColor: selectedCat === cat.key ? cat.color : "#252525",
+                    borderColor: selectedCat === cat.key ? cat.color : "var(--border2)",
                     background: selectedCat === cat.key ? cat.color + "22" : "transparent",
-                    color: selectedCat === cat.key ? cat.color : "#666",
+                    color: selectedCat === cat.key ? cat.color : "var(--muted3)",
                     fontSize: 11, fontFamily: "inherit", cursor: "pointer",
                   }}>
                     {cat.icon} {cat.label} ({cat.exercises.length})
@@ -1020,7 +1042,7 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ fontSize: 10, letterSpacing: 3, color: "#888", textTransform: "uppercase", marginBottom: 10 }}>
+            <div style={{ fontSize: 10, letterSpacing: 3, color: "var(--muted)", textTransform: "uppercase", marginBottom: 10 }}>
               {search
                 ? `${filteredExercises.length} results for "${search}"`
                 : `${ALL_EXERCISES[selectedCat]?.label} — ${ALL_EXERCISES[selectedCat]?.exercises.length} exercises`}
@@ -1032,8 +1054,8 @@ export default function App() {
               const catKey = search ? (exerciseCategoryMap[ex.name] ?? selectedCat) : selectedCat;
               return (
                 <div key={idx} style={{
-                  background: warn ? "#120e00" : "#0f0f0f",
-                  border: `1px solid ${warn ? "#f59e0b44" : "#1e1e1e"}`,
+                  background: warn ? "var(--warn-surface)" : "var(--surface)",
+                  border: `1px solid ${warn ? "#f59e0b44" : "var(--border)"}`,
                   borderRadius: 11, padding: "13px 15px", marginBottom: 8,
                   display: "flex", alignItems: "center", gap: 12,
                 }}>
@@ -1050,8 +1072,8 @@ export default function App() {
                       )}
                     </div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                      <span style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 5, padding: "2px 7px", fontSize: 11, color: "#e85d26" }}>{ex.sets}</span>
-                      <span style={{ fontSize: 11, color: "#888" }}>{ex.notes}</span>
+                      <span style={{ background: "var(--surface3)", border: "1px solid #2a2a2a", borderRadius: 5, padding: "2px 7px", fontSize: 11, color: "#e85d26" }}>{ex.sets}</span>
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>{ex.notes}</span>
                     </div>
                   </div>
                   <button
@@ -1059,7 +1081,7 @@ export default function App() {
                     title="How to perform"
                     style={{
                       background: "none", border: "1px solid #252525", borderRadius: 7,
-                      width: 30, height: 30, color: "#888", fontSize: 14,
+                      width: 30, height: 30, color: "var(--muted)", fontSize: 14,
                       cursor: "pointer", flexShrink: 0, fontFamily: "inherit",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}
@@ -1079,8 +1101,8 @@ export default function App() {
               {weekSchedule.map(d => (
                 <button key={d.day} onClick={() => setSelectedDay(d.day)} style={{
                   minWidth: 50, padding: "9px 4px", borderRadius: 9, border: "1px solid",
-                  borderColor: selectedDay === d.day ? d.color : "#1e1e1e",
-                  background: selectedDay === d.day ? d.color : "#0f0f0f",
+                  borderColor: selectedDay === d.day ? d.color : "var(--border)",
+                  background: selectedDay === d.day ? d.color : "var(--surface)",
                   color: selectedDay === d.day ? "#fff" : "#555",
                   fontSize: 10, fontFamily: "inherit", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1,
                 }}>
@@ -1092,15 +1114,15 @@ export default function App() {
 
             {/* Day header */}
             <div style={{
-              background: "#0f0f0f", border: `1px solid ${dayData?.color || "#1e1e1e"}`,
+              background: "var(--surface)", border: `1px solid ${dayData?.color || "var(--border)"}`,
               borderRadius: 13, padding: "15px 17px", marginBottom: 12,
               display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
               <div>
-                <div style={{ fontSize: 10, color: "#888", letterSpacing: 2, textTransform: "uppercase" }}>{selectedDay}</div>
+                <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 2, textTransform: "uppercase" }}>{selectedDay}</div>
                 <div style={{ fontSize: 19, fontWeight: "bold", color: dayData?.color }}>{dayData?.focus}</div>
                 {dayExercises.length > 0 && (
-                  <div style={{ fontSize: 11, color: "#888", marginTop: 4 }}>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
                     {dayData?.cats.map(ck => ALL_EXERCISES[ck]?.label).join(" · ")}
                   </div>
                 )}
@@ -1108,7 +1130,7 @@ export default function App() {
               {dayExercises.length > 0 && (
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontSize: 26, fontWeight: "bold", color: dayData?.color }}>{dayDone}</div>
-                  <div style={{ fontSize: 10, color: "#888" }}>of {dayExercises.length}</div>
+                  <div style={{ fontSize: 10, color: "var(--muted)" }}>of {dayExercises.length}</div>
                 </div>
               )}
             </div>
@@ -1116,23 +1138,23 @@ export default function App() {
             {/* Warm-up callout */}
             {dayData?.warmup && WARMUP_PRESETS[dayData.warmup] && (
               <div style={{
-                background: "#0a1510", border: "1px solid #10b98133",
+                background: "var(--info-surface)", border: "1px solid #10b98133",
                 borderRadius: 10, padding: "10px 14px", marginBottom: 12,
                 display: "flex", alignItems: "center", gap: 10,
               }}>
                 <span style={{ fontSize: 18 }}>🧘</span>
                 <div>
                   <div style={{ fontSize: 10, color: "#10b981", letterSpacing: 2, textTransform: "uppercase", marginBottom: 2 }}>Warm-up first — 2–3 min</div>
-                  <div style={{ fontSize: 11, color: "#666" }}>{WARMUP_PRESETS[dayData.warmup]}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted3)" }}>{WARMUP_PRESETS[dayData.warmup]}</div>
                 </div>
               </div>
             )}
 
             {dayExercises.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "48px 20px", color: "#666" }}>
+              <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--muted3)" }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>😴</div>
                 <div style={{ fontSize: 17 }}>Rest Day</div>
-                <div style={{ fontSize: 12, marginTop: 6, color: "#777" }}>Light walk or 10 min mobility recommended.</div>
+                <div style={{ fontSize: 12, marginTop: 6, color: "var(--muted2)" }}>Light walk or 10 min mobility recommended.</div>
               </div>
             ) : (
               dayExercises.map((ex, idx) => {
@@ -1141,8 +1163,8 @@ export default function App() {
                 const warn = hasCaution(ex);
                 return (
                   <div key={idx} style={{
-                    background: allDone ? "#091a09" : warn ? "#120e00" : "#0f0f0f",
-                    border: `1px solid ${allDone ? "#2d6a4f" : warn ? "#f59e0b44" : "#1e1e1e"}`,
+                    background: allDone ? "var(--success-surface)" : warn ? "var(--warn-surface)" : "var(--surface)",
+                    border: `1px solid ${allDone ? "#2d6a4f" : warn ? "#f59e0b44" : "var(--border)"}`,
                     borderRadius: 11, marginBottom: 8, overflow: "hidden",
                   }}>
                     <div onClick={() => setExpanded(isExp ? null : ex.name)} style={{
@@ -1152,7 +1174,7 @@ export default function App() {
                         <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
                           <span style={{
                             fontSize: 14, fontWeight: "bold",
-                            color: allDone ? "#4ade80" : "#f0ede8",
+                            color: allDone ? "#4ade80" : "var(--text)",
                             textDecoration: allDone ? "line-through" : "none",
                             opacity: allDone ? 0.6 : 1,
                           }}>{ex.name}</span>
@@ -1164,33 +1186,33 @@ export default function App() {
                             }}>Modify</span>
                           )}
                         </div>
-                        <div style={{ fontSize: 11, color: "#888" }}>{ex.sets} · {ex.notes}</div>
+                        <div style={{ fontSize: 11, color: "var(--muted)" }}>{ex.sets} · {ex.notes}</div>
                       </div>
                       <button
                         onClick={e => { e.stopPropagation(); setDemoEx(ex); }}
                         title="How to perform"
                         style={{
                           background: "none", border: "1px solid #252525", borderRadius: 7,
-                          width: 28, height: 28, color: "#888", fontSize: 13,
+                          width: 28, height: 28, color: "var(--muted)", fontSize: 13,
                           cursor: "pointer", flexShrink: 0, fontFamily: "inherit",
                           display: "flex", alignItems: "center", justifyContent: "center",
                         }}
                       >ⓘ</button>
-                      <div style={{ fontSize: 16, color: allDone ? "#4ade80" : "#333" }}>
+                      <div style={{ fontSize: 16, color: allDone ? "#4ade80" : "var(--border3)" }}>
                         {allDone ? "✓" : isExp ? "▲" : "▼"}
                       </div>
                     </div>
                     {isExp && (
                       <div style={{ padding: "0 15px 13px", borderTop: "1px solid #181818", paddingTop: 12 }}>
-                        <div style={{ fontSize: 10, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Log Sets</div>
+                        <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>Log Sets</div>
                         <div style={{ display: "flex", gap: 8 }}>
                           {[1, 2, 3].map((s, i) => {
                             const done = completed[`${todayStr}:${ex.name}-${i}`];
                             return (
                               <button key={i} onClick={() => toggleSet(ex.name, i)} style={{
                                 flex: 1, padding: "11px 0", borderRadius: 9,
-                                border: `2px solid ${done ? "#4ade80" : "#252525"}`,
-                                background: done ? "#0d2010" : "#161616",
+                                border: `2px solid ${done ? "#4ade80" : "var(--border2)"}`,
+                                background: done ? "var(--success-surface2)" : "var(--surface2)",
                                 color: done ? "#4ade80" : "#555",
                                 fontSize: 13, fontFamily: "inherit", cursor: "pointer",
                               }}>
@@ -1220,10 +1242,10 @@ export default function App() {
                 { label: "Best Streak", value: streak.best, unit: streak.best === 1 ? "day" : "days", color: "#8b5cf6" },
                 { label: "Total Workouts", value: streak.total, unit: "done", color: "#10b981" },
               ].map((s, i) => (
-                <div key={i} style={{ background: "#0f0f0f", border: `1px solid ${s.color}33`, borderRadius: 11, padding: "12px 10px", textAlign: "center" }}>
+                <div key={i} style={{ background: "var(--surface)", border: `1px solid ${s.color}33`, borderRadius: 11, padding: "12px 10px", textAlign: "center" }}>
                   <div style={{ fontSize: 22, fontWeight: "bold", color: s.color }}>{s.value}</div>
-                  <div style={{ fontSize: 9, color: "#888", marginTop: 2, letterSpacing: 0.5 }}>{s.unit}</div>
-                  <div style={{ fontSize: 9, color: "#777", marginTop: 3, letterSpacing: 0.5, textTransform: "uppercase" }}>{s.label}</div>
+                  <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 2, letterSpacing: 0.5 }}>{s.unit}</div>
+                  <div style={{ fontSize: 9, color: "var(--muted2)", marginTop: 3, letterSpacing: 0.5, textTransform: "uppercase" }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -1231,19 +1253,19 @@ export default function App() {
             {/* Mission card */}
             {missionComplete ? (
               <div style={{
-                background: "linear-gradient(135deg, #0a1a0a, #080808)",
+                background: "linear-gradient(135deg, var(--complete-surface), var(--bg))",
                 border: "1px solid #4ade8044", borderRadius: 14,
                 padding: "20px", marginBottom: 14, textAlign: "center",
               }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>🎖️</div>
                 <div style={{ fontSize: 10, color: "#4ade80", letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>Mission Complete</div>
                 <div style={{ fontSize: 22, fontWeight: "bold" }}>30-Day Mission</div>
-                <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>You completed {workoutsCompleted} workouts.</div>
+                <div style={{ fontSize: 13, color: "var(--muted3)", marginTop: 4 }}>You completed {workoutsCompleted} workouts.</div>
                 <button
                   onClick={restartMission}
                   style={{
                     marginTop: 16, padding: "10px 24px", borderRadius: 20,
-                    border: "1px solid #4ade80", background: "#0d2010",
+                    border: "1px solid #4ade80", background: "var(--success-surface2)",
                     color: "#4ade80", fontSize: 13, fontFamily: "inherit", cursor: "pointer",
                   }}
                 >
@@ -1252,32 +1274,32 @@ export default function App() {
               </div>
             ) : (
               <div style={{
-                background: "linear-gradient(135deg, #1a0800, #080808)",
+                background: "linear-gradient(135deg, var(--mission-surface), var(--bg))",
                 border: "1px solid #e85d2644", borderRadius: 14,
                 padding: "20px", marginBottom: 14, textAlign: "center",
               }}>
                 <div style={{ fontSize: 10, color: "#e85d26", letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>30-Day Mission</div>
                 <div style={{ fontSize: 44, fontWeight: "bold" }}>{workoutsCompleted}</div>
-                <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>of {TARGET_WORKOUTS} workouts</div>
-                <div style={{ marginTop: 14, height: 6, background: "#1a1a1a", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>of {TARGET_WORKOUTS} workouts</div>
+                <div style={{ marginTop: 14, height: 6, background: "var(--surface3)", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{ height: "100%", width: `${missionProgress}%`, background: "#e85d26", borderRadius: 3, transition: "width 0.4s ease" }} />
                 </div>
-                <div style={{ fontSize: 10, color: "#888", marginTop: 6 }}>
+                <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 6 }}>
                   {missionProgress}% complete · Calendar day {missionDay}
                 </div>
               </div>
             )}
 
             {/* This week */}
-            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>This Week</div>
+            <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>This Week</div>
             <div style={{ display: "flex", gap: 5, marginBottom: 18 }}>
               {weekSchedule.map((d, i) => {
                 const dateStr = thisWeekDates[i];
                 const isDone = completedWorkoutDates.includes(dateStr);
                 return (
                   <div key={d.day} style={{
-                    flex: 1, textAlign: "center", background: "#0f0f0f",
-                    border: `1px solid ${isDone ? d.color + "66" : d.cats.length > 0 ? "#1e1e1e" : "#141414"}`,
+                    flex: 1, textAlign: "center", background: "var(--surface)",
+                    border: `1px solid ${isDone ? d.color + "66" : d.cats.length > 0 ? "var(--border)" : "var(--border-subtle)"}`,
                     borderRadius: 9, padding: "9px 0",
                   }}>
                     <div style={{ fontSize: 9, color: isDone ? d.color : "#444", letterSpacing: 1 }}>{d.day}</div>
@@ -1290,25 +1312,25 @@ export default function App() {
             </div>
 
             {/* Library stats */}
-            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Exercise Library</div>
+            <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Exercise Library</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
               {categories.map(cat => (
-                <div key={cat.key} style={{ background: "#0f0f0f", border: `1px solid ${cat.color}33`, borderRadius: 11, padding: "14px", textAlign: "center" }}>
+                <div key={cat.key} style={{ background: "var(--surface)", border: `1px solid ${cat.color}33`, borderRadius: 11, padding: "14px", textAlign: "center" }}>
                   <div style={{ fontSize: 20 }}>{cat.icon}</div>
                   <div style={{ fontSize: 22, fontWeight: "bold", color: cat.color, marginTop: 4 }}>{cat.exercises.length}</div>
-                  <div style={{ fontSize: 10, color: "#888", marginTop: 3 }}>{cat.label}</div>
+                  <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>{cat.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Milestones */}
-            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Milestones</div>
+            <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Milestones</div>
             {[
               { week: "Week 1–2", goal: "Build the habit, muscles adapt", icon: "🌱" },
               { week: "Week 3", goal: "Noticeable strength in push-ups & squats", icon: "💪" },
               { week: "Week 4", goal: "Core stronger, posture visibly improved", icon: "🎯" },
             ].map((m, i) => (
-              <div key={i} style={{ background: "#0f0f0f", border: "1px solid #1e1e1e", borderRadius: 11, padding: "13px 15px", marginBottom: 8, display: "flex", alignItems: "center", gap: 13 }}>
+              <div key={i} style={{ background: "var(--surface)", border: "1px solid #1e1e1e", borderRadius: 11, padding: "13px 15px", marginBottom: 8, display: "flex", alignItems: "center", gap: 13 }}>
                 <span style={{ fontSize: 26 }}>{m.icon}</span>
                 <div>
                   <div style={{ fontSize: 12, color: "#e85d26", marginBottom: 3, letterSpacing: 1 }}>{m.week}</div>
@@ -1320,13 +1342,13 @@ export default function App() {
             {/* Active ailment modifications */}
             {activeAilments.length > 0 && (
               <>
-                <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, marginTop: 18 }}>Your Modifications</div>
+                <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, marginTop: 18 }}>Your Modifications</div>
                 {activeAilments.map((a) => (
-                  <div key={a.key} style={{ background: "#0f0f0f", border: "1px solid #2a1a00", borderRadius: 11, padding: "12px 15px", marginBottom: 8, display: "flex", gap: 12, alignItems: "center" }}>
+                  <div key={a.key} style={{ background: "var(--surface)", border: "1px solid var(--caution-border)", borderRadius: 11, padding: "12px 15px", marginBottom: 8, display: "flex", gap: 12, alignItems: "center" }}>
                     <span style={{ fontSize: 20 }}>⚠️</span>
                     <div>
                       <div style={{ fontSize: 12, color: "#f59e0b", marginBottom: 3 }}>{a.label}</div>
-                      <div style={{ fontSize: 12, color: "#666" }}>{a.note}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted3)" }}>{a.note}</div>
                     </div>
                   </div>
                 ))}
@@ -1334,7 +1356,7 @@ export default function App() {
             )}
 
             {activeAilments.length === 0 && (
-              <div style={{ background: "#0f0f0f", border: "1px solid #1e1e1e", borderRadius: 11, padding: "16px", marginTop: 18, textAlign: "center", color: "#777", fontSize: 12 }}>
+              <div style={{ background: "var(--surface)", border: "1px solid #1e1e1e", borderRadius: 11, padding: "16px", marginTop: 18, textAlign: "center", color: "var(--muted2)", fontSize: 12 }}>
                 No modifications set.{" "}
                 <span onClick={() => setActiveTab("settings")} style={{ color: "#e85d26", cursor: "pointer" }}>
                   Add ailments in Settings →
@@ -1349,10 +1371,10 @@ export default function App() {
         ════════════════════════════════════════════════════════════════════ */}
         {activeTab === "settings" && (
           <>
-            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Profile</div>
+            <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Profile</div>
 
             <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 11, color: "#666", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Name (optional)</div>
+              <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 }}>Name (optional)</div>
               <input
                 value={prefs.name}
                 onChange={e => setPrefs(p => ({ ...p, name: e.target.value }))}
@@ -1362,16 +1384,16 @@ export default function App() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, color: "#666", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8, marginTop: 12 }}>Age Range</div>
+              <div style={{ fontSize: 11, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 8, marginTop: 12 }}>Age Range</div>
               <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
                 {AGE_RANGES.map(range => {
                   const active = prefs.ageRange === range;
                   return (
                     <button key={range} onClick={() => setPrefs(p => ({ ...p, ageRange: active ? "" : range }))} style={{
                       padding: "8px 16px", borderRadius: 20, border: "1px solid",
-                      borderColor: active ? "#e85d26" : "#252525",
+                      borderColor: active ? "#e85d26" : "var(--border2)",
                       background: active ? "#e85d2622" : "transparent",
-                      color: active ? "#e85d26" : "#666",
+                      color: active ? "#e85d26" : "var(--muted3)",
                       fontSize: 13, fontFamily: "inherit", cursor: "pointer",
                     }}>{range}</button>
                   );
@@ -1379,8 +1401,8 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>Physical Limitations</div>
-            <div style={{ fontSize: 11, color: "#777", marginBottom: 14 }}>
+            <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>Physical Limitations</div>
+            <div style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 14 }}>
               Exercises that conflict with your selections will be flagged with a "Modify" badge in the Library and Schedule.
             </div>
 
@@ -1388,54 +1410,54 @@ export default function App() {
               const active = prefs.ailments.includes(a.key);
               return (
                 <div key={a.key} onClick={() => toggleAilment(a.key)} style={{
-                  background: active ? "#120e00" : "#0f0f0f",
-                  border: `1px solid ${active ? "#f59e0b66" : "#1e1e1e"}`,
+                  background: active ? "var(--warn-surface)" : "var(--surface)",
+                  border: `1px solid ${active ? "#f59e0b66" : "var(--border)"}`,
                   borderRadius: 11, padding: "13px 15px", marginBottom: 8,
                   display: "flex", alignItems: "center", gap: 13, cursor: "pointer",
                 }}>
                   <div style={{
                     width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-                    border: `2px solid ${active ? "#f59e0b" : "#333"}`,
+                    border: `2px solid ${active ? "#f59e0b" : "var(--border3)"}`,
                     background: active ? "#f59e0b" : "transparent",
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
                     {active && <span style={{ fontSize: 11, color: "#000", fontWeight: "bold" }}>✓</span>}
                   </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: "bold", color: active ? "#f59e0b" : "#f0ede8", marginBottom: 3 }}>{a.label}</div>
-                    <div style={{ fontSize: 11, color: "#888" }}>{a.note}</div>
+                    <div style={{ fontSize: 14, fontWeight: "bold", color: active ? "#f59e0b" : "var(--text)", marginBottom: 3 }}>{a.label}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)" }}>{a.note}</div>
                   </div>
                 </div>
               );
             })}
 
-            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, marginTop: 28 }}>Mission</div>
+            <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, marginTop: 28 }}>Mission</div>
             <button
               onClick={restartMission}
               style={{
                 width: "100%", padding: "13px", borderRadius: 11, marginBottom: 8,
                 border: "1px solid #252525", background: "transparent",
-                color: "#888", fontSize: 13, fontFamily: "inherit", cursor: "pointer", letterSpacing: 1,
+                color: "var(--muted)", fontSize: 13, fontFamily: "inherit", cursor: "pointer", letterSpacing: 1,
               }}
             >
               Restart 30-Day Mission
             </button>
-            <div style={{ fontSize: 10, color: "#666", textAlign: "center", marginBottom: 20 }}>
+            <div style={{ fontSize: 10, color: "var(--muted3)", textAlign: "center", marginBottom: 20 }}>
               Resets mission start date, completed sets, and workout history.
             </div>
 
-            <div style={{ fontSize: 10, color: "#888", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Data</div>
+            <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Data</div>
             <button
               onClick={resetProgress}
               style={{
                 width: "100%", padding: "13px", borderRadius: 11,
-                border: "1px solid #3a1a1a", background: "transparent",
+                border: "1px solid var(--danger-border)", background: "transparent",
                 color: "#ef4444", fontSize: 13, fontFamily: "inherit", cursor: "pointer", letterSpacing: 1,
               }}
             >
               Reset Workout Progress
             </button>
-            <div style={{ fontSize: 10, color: "#666", textAlign: "center", marginTop: 6 }}>
+            <div style={{ fontSize: 10, color: "var(--muted3)", textAlign: "center", marginTop: 6 }}>
               Clears logged sets and completed days. Keeps profile and mission start date.
             </div>
           </>
@@ -1445,9 +1467,9 @@ export default function App() {
       {/* Footer */}
       <div style={{
         position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-        width: "100%", maxWidth: 480, background: "#080808",
+        width: "100%", maxWidth: 480, background: "var(--bg)",
         borderTop: "1px solid #141414", padding: "10px 18px 18px",
-        textAlign: "center", fontSize: 10, color: "#252525", letterSpacing: 2,
+        textAlign: "center", fontSize: 10, color: "var(--border2)", letterSpacing: 2,
       }}>
         {prefs.name ? `${prefs.name.toUpperCase()} · ` : ""}{totalExercises} EXERCISES · LOW IMPACT PROTOCOL
       </div>
@@ -1465,7 +1487,7 @@ export default function App() {
           >
             <div
               onClick={e => e.stopPropagation()}
-              style={{ background: "#0f0f0f", border: "1px solid #1e1e1e", borderRadius: "20px 20px 0 0", padding: "22px 20px 36px", width: "100%", maxWidth: 480, maxHeight: "82vh", overflowY: "auto" }}
+              style={{ background: "var(--surface)", border: "1px solid #1e1e1e", borderRadius: "20px 20px 0 0", padding: "22px 20px 36px", width: "100%", maxWidth: 480, maxHeight: "82vh", overflowY: "auto" }}
             >
               {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
@@ -1474,11 +1496,11 @@ export default function App() {
                     {ALL_EXERCISES[catKey]?.icon} {ALL_EXERCISES[catKey]?.label}
                   </div>
                   <div style={{ fontSize: 18, fontWeight: "bold", lineHeight: 1.2 }}>{demoEx.name}</div>
-                  <div style={{ fontSize: 11, color: "#888", marginTop: 5 }}>{demoEx.sets} · {demoEx.notes}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>{demoEx.sets} · {demoEx.notes}</div>
                 </div>
                 <button
                   onClick={() => setDemoEx(null)}
-                  style={{ background: "#1a1a1a", border: "1px solid #252525", borderRadius: 8, width: 32, height: 32, color: "#666", fontSize: 16, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
+                  style={{ background: "var(--surface3)", border: "1px solid #252525", borderRadius: 8, width: 32, height: 32, color: "var(--muted3)", fontSize: 16, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
                 >✕</button>
               </div>
 
@@ -1497,12 +1519,12 @@ export default function App() {
 
               {/* Form cues */}
               {demo?.cues && (
-                <div style={{ background: "#080f08", border: "1px solid #1e3a1e", borderRadius: 10, padding: "12px 14px", marginTop: 6, marginBottom: 16 }}>
+                <div style={{ background: "var(--cues-surface)", border: "1px solid var(--cues-border)", borderRadius: 10, padding: "12px 14px", marginTop: 6, marginBottom: 16 }}>
                   <div style={{ fontSize: 9, color: "#4ade80", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Form Cues</div>
                   {demo.cues.map((cue, i) => (
                     <div key={i} style={{ display: "flex", gap: 8, marginBottom: i < demo.cues.length - 1 ? 8 : 0 }}>
                       <span style={{ color: "#4ade80", fontSize: 10, marginTop: 2, flexShrink: 0 }}>▸</span>
-                      <span style={{ fontSize: 12, color: "#888", lineHeight: 1.4 }}>{cue}</span>
+                      <span style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.4 }}>{cue}</span>
                     </div>
                   ))}
                 </div>
@@ -1516,7 +1538,7 @@ export default function App() {
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   width: "100%", padding: "13px", borderRadius: 11, boxSizing: "border-box",
-                  border: "1px solid #ff000033", background: "#180000",
+                  border: "1px solid #ff000033", background: "var(--yt-surface)",
                   color: "#ff4444", fontSize: 13, textDecoration: "none",
                   fontFamily: "inherit", letterSpacing: 0.5,
                 }}
