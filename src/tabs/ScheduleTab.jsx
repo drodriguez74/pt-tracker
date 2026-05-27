@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { GiMeditation } from "react-icons/gi";
-import { ALL_EXERCISES, WARMUP_PRESETS, AILMENTS } from "../data/exercises";
+import { ALL_EXERCISES, WARMUP_PRESETS, AILMENTS, exerciseCategoryMap } from "../data/exercises";
 import { weekSchedule, DAY_ABBRS, getThisWeekDates } from "../data/schedule";
 import { askCoach } from "../utils/aiCoach";
 
@@ -11,6 +11,106 @@ function getGreeting() {
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
+}
+
+// ── Recovery Warning ─────────────────────────────────────────────────────────
+
+const MUSCLE_GROUPS = {
+  pushVariations: "push", dipsTriCeps: "push",
+  pullVariations: "pull", back: "pull",
+  lowerBody: "lower", core: "core",
+};
+const MUSCLE_LABELS = { push: "Push", pull: "Pull", lower: "Lower body", core: "Core" };
+
+function getExercisesForDate(completed, dateStr) {
+  const seen = new Set();
+  for (const key of Object.keys(completed)) {
+    if (!key.startsWith(dateStr + ":") || !completed[key]) continue;
+    const name = key.slice(dateStr.length + 1).replace(/-\d+$/, "");
+    seen.add(name);
+  }
+  return [...seen];
+}
+
+function getMuscleGroupMap(exerciseNames) {
+  const map = new Map();
+  for (const name of exerciseNames) {
+    const group = MUSCLE_GROUPS[exerciseCategoryMap[name]];
+    if (group) {
+      if (!map.has(group)) map.set(group, []);
+      map.get(group).push(name);
+    }
+  }
+  return map;
+}
+
+function buildWarnings(completed, dayExercises, todayStr) {
+  const warnings = [];
+  const yesterday = new Date(new Date(todayStr).getTime() - 86400000).toISOString().split("T")[0];
+  const ydayNames = getExercisesForDate(completed, yesterday);
+
+  if (ydayNames.length > 0) {
+    const ydayGroups = getMuscleGroupMap(ydayNames);
+    const todayGroups = getMuscleGroupMap(dayExercises.map(e => e.name));
+    for (const [group] of todayGroups) {
+      if (ydayGroups.has(group)) {
+        const examples = ydayGroups.get(group).slice(0, 2).join(", ");
+        warnings.push({ type: "overlap", group, examples });
+      }
+    }
+  }
+
+  let streak = 0;
+  for (let i = 1; i <= 5; i++) {
+    const d = new Date(new Date(todayStr).getTime() - i * 86400000).toISOString().split("T")[0];
+    if (getExercisesForDate(completed, d).length > 0) streak++;
+    else break;
+  }
+  if (streak >= 3) warnings.push({ type: "streak", streak });
+
+  return warnings;
+}
+
+function RecoveryWarning({ completed, dayExercises, todayStr }) {
+  const [dismissed, setDismissed] = useState(
+    () => localStorage.getItem(`pt-warn-dismissed:${todayStr}`) === "true"
+  );
+
+  const warnings = buildWarnings(completed, dayExercises, todayStr);
+  if (dismissed || !warnings.length) return null;
+
+  function dismiss() {
+    localStorage.setItem(`pt-warn-dismissed:${todayStr}`, "true");
+    setDismissed(true);
+  }
+
+  return (
+    <div style={{
+      background: "var(--warn-surface)", border: "1px solid #f59e0b44",
+      borderLeft: "3px solid #f59e0b",
+      borderRadius: 10, padding: "12px 14px", marginBottom: 8,
+      position: "relative",
+    }}>
+      <button
+        onClick={dismiss}
+        style={{ position: "absolute", top: 8, right: 10, background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}
+      >✕</button>
+      <div style={{ fontSize: 9, color: "#f59e0b", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>
+        Recovery Heads-Up
+      </div>
+      {warnings.map((w, i) => (
+        <div key={i} style={{ display: "flex", gap: 8, marginBottom: i < warnings.length - 1 ? 6 : 0 }}>
+          <span style={{ color: "#f59e0b", fontSize: 10, marginTop: 2, flexShrink: 0 }}>▸</span>
+          <span style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.45 }}>
+            {w.type === "overlap"
+              ? <><span style={{ color: "var(--text)", fontWeight: "bold" }}>{MUSCLE_LABELS[w.group]}</span> muscles hit yesterday ({w.examples}) — reduce volume or sub easier variants</>
+              : <><span style={{ color: "var(--text)", fontWeight: "bold" }}>{w.streak} training days</span> in a row — consider lighter effort today</>
+            }
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // ── Pre-workout AI Brief ──────────────────────────────────────────────────────
@@ -283,6 +383,11 @@ export default function ScheduleTab({
             ? "✓ Workout Complete"
             : dayDone > 0 ? "▶ Continue Workout" : "▶ Start Workout"}
         </button>
+      )}
+
+      {/* ── Recovery warning (today, training days) ── */}
+      {dayExercises.length > 0 && isToday && (
+        <RecoveryWarning completed={completed} dayExercises={dayExercises} todayStr={todayStr} />
       )}
 
       {/* ── Pre-workout AI brief (today, training days, not yet complete) ── */}
