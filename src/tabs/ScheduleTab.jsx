@@ -497,43 +497,45 @@ export default function ScheduleTab({
           </div>
 
           {/* Train Anyway — today only */}
-          {isToday && getDayExercises && (
-            <div style={{ marginTop: 20 }}>
-              <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
-                Still want to train?
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {weekSchedule.filter(d => d.cats.length > 0).map(d => (
-                  <button
-                    key={d.day}
-                    onClick={() => startWorkout(getDayExercises(d.day))}
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "14px 16px", borderRadius: 11,
-                      border: `1px solid ${d.color}44`,
-                      background: `${d.color}0d`,
-                      cursor: "pointer", fontFamily: "inherit", textAlign: "left",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: 9, color: d.color, letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>
-                        {d.day}
-                      </div>
-                      <div style={{ fontSize: 14, fontWeight: "bold", color: "var(--text)" }}>
-                        {d.focus}
-                      </div>
+          {isToday && getDayExercises && (() => {
+            const todayIdx = weekSchedule.findIndex(d => d.day === todayAbbr);
+            const next = weekSchedule.find((_, i) =>
+              i > todayIdx && weekSchedule[(todayIdx + (i - todayIdx)) % weekSchedule.length]?.cats.length > 0
+            ) || weekSchedule.find(d => d.cats.length > 0);
+            const nextDay = weekSchedule.slice(todayIdx + 1).find(d => d.cats.length > 0)
+              || weekSchedule.find(d => d.cats.length > 0);
+            if (!nextDay) return null;
+            const exs = getDayExercises(nextDay.day, 1);
+            return (
+              <div style={{ marginTop: 20 }}>
+                <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
+                  Still want to train?
+                </div>
+                <button
+                  onClick={() => startWorkout(exs)}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "16px", borderRadius: 11, boxSizing: "border-box",
+                    border: `1px solid ${nextDay.color}44`, background: `${nextDay.color}0d`,
+                    cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 9, color: nextDay.color, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>
+                      {nextDay.day} · {nextDay.focus}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>
-                        {getDayExercises(d.day).length} exercises
-                      </div>
-                      <span style={{ fontSize: 16, color: d.color }}>▶</span>
+                    <div style={{ fontSize: 15, fontWeight: "bold", color: "var(--text)", marginBottom: 3 }}>
+                      Do tomorrow's workout today
                     </div>
-                  </button>
-                ))}
+                    <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                      {exs.length} exercises · fresh rotation, won't repeat {nextDay.day}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 20, color: nextDay.color, flexShrink: 0, marginLeft: 12 }}>▶</span>
+                </button>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       ) : (
         dayExercises.map((ex, idx) => {

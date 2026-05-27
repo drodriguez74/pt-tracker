@@ -120,10 +120,21 @@ export default function App() {
     return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, count);
   };
 
-  const getDayExercises = useCallback((dayAbbr) => {
+  const getDayExercises = useCallback((dayAbbr, weekOffset = 0) => {
     const data = weekSchedule.find(d => d.day === dayAbbr);
     if (!data?.cats?.length) return [];
-    return data.cats.flatMap((ck, ci) => getRotatedExercises(ck, data.catCounts?.[ci] ?? 3));
+    const wkNum = weekNumber + weekOffset;
+    return data.cats.flatMap((ck, ci) => {
+      const count = data.catCounts?.[ci] ?? 3;
+      const exs = ALL_EXERCISES[ck]?.exercises || [];
+      if (!exs.length) return [];
+      const earlyWeeks = wkNum <= 1;
+      const preferred = exs.filter(e => earlyWeeks ? e.difficulty === "beginner" : e.difficulty !== "beginner");
+      const fallback   = exs.filter(e => earlyWeeks ? e.difficulty !== "beginner" : e.difficulty === "beginner");
+      const pool = preferred.length >= count ? preferred : [...preferred, ...fallback];
+      const offset = (wkNum * count) % pool.length;
+      return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, count);
+    });
   }, [weekNumber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dayData = weekSchedule.find(d => d.day === selectedDay);
