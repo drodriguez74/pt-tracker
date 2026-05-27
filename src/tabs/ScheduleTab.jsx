@@ -220,7 +220,7 @@ export default function ScheduleTab({
   todayStr, completed,
   missionStartDate, weekProg,
   hasCaution, toggleSet, completeAllSets, startWorkout, setDemoEx,
-  prefs, completedWorkoutDates,
+  prefs, completedWorkoutDates, getDayExercises,
 }) {
   const todayAbbr = DAY_ABBRS[new Date().getDay()];
   const isToday = selectedDay === todayAbbr;
@@ -495,6 +495,45 @@ export default function ScheduleTab({
           <div style={{ textAlign: "center", padding: "12px 0 4px", fontSize: 11, color: "var(--muted3)" }}>
             Or a 10-min walk counts. See you tomorrow.
           </div>
+
+          {/* Train Anyway — today only */}
+          {isToday && getDayExercises && (
+            <div style={{ marginTop: 20 }}>
+              <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
+                Still want to train?
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {weekSchedule.filter(d => d.cats.length > 0).map(d => (
+                  <button
+                    key={d.day}
+                    onClick={() => startWorkout(getDayExercises(d.day))}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "14px 16px", borderRadius: 11,
+                      border: `1px solid ${d.color}44`,
+                      background: `${d.color}0d`,
+                      cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 9, color: d.color, letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>
+                        {d.day}
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: "bold", color: "var(--text)" }}>
+                        {d.focus}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ fontSize: 11, color: "var(--muted3)" }}>
+                        {getDayExercises(d.day).length} exercises
+                      </div>
+                      <span style={{ fontSize: 16, color: d.color }}>▶</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         dayExercises.map((ex, idx) => {

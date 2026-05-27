@@ -120,6 +120,12 @@ export default function App() {
     return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, count);
   };
 
+  const getDayExercises = useCallback((dayAbbr) => {
+    const data = weekSchedule.find(d => d.day === dayAbbr);
+    if (!data?.cats?.length) return [];
+    return data.cats.flatMap((ck, ci) => getRotatedExercises(ck, data.catCounts?.[ci] ?? 3));
+  }, [weekNumber]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const dayData = weekSchedule.find(d => d.day === selectedDay);
   const dayExercises = dayData?.cats.flatMap((ck, ci) =>
     getRotatedExercises(ck, dayData.catCounts?.[ci] ?? 3)
@@ -479,6 +485,7 @@ export default function App() {
             startWorkout={startWorkout} setDemoEx={setDemoEx}
             prefs={prefs}
             completedWorkoutDates={completedWorkoutDates}
+            getDayExercises={getDayExercises}
           />
         )}
         {activeTab === "progress" && (
