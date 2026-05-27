@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useHandsFreeInput } from "./useHandsFreeInput";
 
 const TOTAL_SETS = 3;
 
@@ -86,8 +87,8 @@ function ExerciseTimer({ secondsLeft, total }) {
 
 // ─── Rest Screen ──────────────────────────────────────────────────────────────
 
-function RestScreen({ secondsLeft, onSkip, nextExercise, nextSet }) {
-  const pct = (secondsLeft / 60) * 100;
+function RestScreen({ secondsLeft, totalSeconds, onSkip, nextExercise, nextSet }) {
+  const pct = (secondsLeft / (totalSeconds || 60)) * 100;
   const urgent = secondsLeft <= 10;
   const r = 80;
   const circ = 2 * Math.PI * r;
@@ -257,6 +258,12 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
 
+  const {
+    voiceActive, voiceSupported, micError,
+    knockActive, knockNeedsPermission, requestKnockPermission,
+    lastCommand,
+  } = useHandsFreeInput({ phase: session.phase, onCompleteSet, onSkipExercise, onSkipRest });
+
   const ex = session.exercises[session.exerciseIdx];
   const timerTotal = getExerciseSeconds(ex);
   const isTimed = session.exerciseSecondsLeft !== null && timerTotal !== null;
@@ -319,6 +326,38 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
           total={session.exercises.length}
           color={accentColor}
         />
+
+        {/* Hands-free status */}
+        {session.phase !== "done" && (
+          <div style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center", paddingTop: 7 }}>
+            {voiceSupported && (
+              <span style={{
+                fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase",
+                color: micError === "blocked" ? "#ef4444" : voiceActive ? "#4ade80" : "var(--muted3)",
+              }}>
+                {micError === "blocked" ? "🎙 mic blocked" : voiceActive ? "🎙 listening" : "🎙 off"}
+              </span>
+            )}
+            {knockActive && (
+              <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase", color: "#4ade80" }}>
+                ✊ tap ready
+              </span>
+            )}
+            {knockNeedsPermission && (
+              <button
+                onClick={requestKnockPermission}
+                style={{
+                  fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase",
+                  color: "#e85d26", background: "none",
+                  border: "1px solid #e85d2666", borderRadius: 4,
+                  padding: "2px 8px", cursor: "pointer", fontFamily: "inherit",
+                }}
+              >
+                ✊ enable tap
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Body ── */}
@@ -328,6 +367,7 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
       ) : session.phase === "resting" ? (
         <RestScreen
           secondsLeft={session.restSecondsLeft}
+          totalSeconds={session.restTotalSeconds}
           onSkip={onSkipRest}
           nextExercise={session.exercises[session.exerciseIdx]}
           nextSet={session.setIdx}
@@ -450,6 +490,23 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
           >
             Skip Exercise
           </button>
+        </div>
+      )}
+
+      {/* ── Command flash ── */}
+      {lastCommand && (
+        <div style={{
+          position: "absolute", top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          background: "#000000dd", backdropFilter: "blur(8px)",
+          border: "1px solid #e85d2666",
+          color: "#e85d26", padding: "14px 28px",
+          borderRadius: 14, fontSize: 18, fontWeight: 900,
+          letterSpacing: 1, pointerEvents: "none",
+          zIndex: 10, animation: "fadeUp 0.2s ease",
+          whiteSpace: "nowrap",
+        }}>
+          {lastCommand}
         </div>
       )}
 

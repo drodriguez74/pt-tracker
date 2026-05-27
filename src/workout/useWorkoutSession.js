@@ -1,6 +1,5 @@
 import { useReducer, useEffect, useRef, useCallback } from "react";
 
-const REST_SECONDS = 60;
 const TOTAL_SETS = 3;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -38,13 +37,15 @@ function reducer(state, action) {
   switch (action.type) {
     case "START_WORKOUT": {
       const exercises = action.exercises;
+      const rest = action.restSeconds ?? 60;
       return {
         ...state,
         phase: "exercise",
         exercises,
         exerciseIdx: 0,
         setIdx: 0,
-        restSecondsLeft: REST_SECONDS,
+        restSecondsLeft: rest,
+        restTotalSeconds: rest,
         exerciseSecondsLeft: getExerciseSeconds(exercises[0]),
         startedAt: Date.now(),
         skipped: [],
@@ -55,12 +56,13 @@ function reducer(state, action) {
       const { exercises, exerciseIdx, setIdx } = state;
       const isLastSet = setIdx >= TOTAL_SETS - 1;
       const isLastExercise = exerciseIdx >= exercises.length - 1;
+      const rest = action.restSeconds ?? state.restTotalSeconds ?? 60;
 
       if (!isLastSet) {
-        return { ...state, phase: "resting", restSecondsLeft: REST_SECONDS, setIdx: setIdx + 1 };
+        return { ...state, phase: "resting", restSecondsLeft: rest, restTotalSeconds: rest, setIdx: setIdx + 1 };
       }
       if (!isLastExercise) {
-        return { ...state, phase: "resting", restSecondsLeft: REST_SECONDS, setIdx: 0, exerciseIdx: exerciseIdx + 1 };
+        return { ...state, phase: "resting", restSecondsLeft: rest, restTotalSeconds: rest, setIdx: 0, exerciseIdx: exerciseIdx + 1 };
       }
       return { ...state, phase: "done" };
     }
@@ -96,12 +98,14 @@ function reducer(state, action) {
       const isLast = exerciseIdx >= exercises.length - 1;
       if (isLast) return { ...state, phase: "done" };
       const nextIdx = exerciseIdx + 1;
+      const rest = action.restSeconds ?? state.restTotalSeconds ?? 60;
       return {
         ...state,
         phase: "exercise",
         exerciseIdx: nextIdx,
         setIdx: 0,
-        restSecondsLeft: REST_SECONDS,
+        restSecondsLeft: rest,
+        restTotalSeconds: rest,
         exerciseSecondsLeft: getExerciseSeconds(exercises[nextIdx]),
         skipped: [...state.skipped, exercises[exerciseIdx].name],
       };
@@ -120,7 +124,8 @@ const initialState = {
   exercises: [],
   exerciseIdx: 0,
   setIdx: 0,
-  restSecondsLeft: REST_SECONDS,
+  restSecondsLeft: 60,
+  restTotalSeconds: 60,
   exerciseSecondsLeft: null,
   startedAt: null,
   skipped: [],
@@ -128,8 +133,11 @@ const initialState = {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useWorkoutSession({ onComplete }) {
+export function useWorkoutSession({ onComplete, restSeconds = 60 }) {
   const [session, dispatch] = useReducer(reducer, initialState);
+  const restSecondsRef = useRef(restSeconds);
+  useEffect(() => { restSecondsRef.current = restSeconds; }, [restSeconds]);
+
   const wakeLockRef = useRef(null);
   const silentAudioRef = useRef(null);
   const restIntervalRef = useRef(null);
@@ -142,7 +150,7 @@ export function useWorkoutSession({ onComplete }) {
       dispatch({ type: "REST_TICK" });
     }, 1000);
     return () => clearInterval(restIntervalRef.current);
-  }, [session.phase, session.restSecondsLeft === REST_SECONDS]);
+  }, [session.phase, session.restSecondsLeft === session.restTotalSeconds]);
 
   // Rest chimes
   useEffect(() => {
@@ -263,11 +271,11 @@ export function useWorkoutSession({ onComplete }) {
 
   // ── Public API ──────────────────────────────────────────────────────────────
   const startWorkout = useCallback((exercises) => {
-    dispatch({ type: "START_WORKOUT", exercises: [...exercises] });
+    dispatch({ type: "START_WORKOUT", exercises: [...exercises], restSeconds: restSecondsRef.current });
   }, []);
 
-  const completeSet    = useCallback(() => dispatch({ type: "COMPLETE_SET" }), []);
-  const skipExercise   = useCallback(() => { vibrate([10, 40, 10]); dispatch({ type: "SKIP_EXERCISE" }); }, []);
+  const completeSet    = useCallback(() => dispatch({ type: "COMPLETE_SET", restSeconds: restSecondsRef.current }), []);
+  const skipExercise   = useCallback(() => { vibrate([10, 40, 10]); dispatch({ type: "SKIP_EXERCISE", restSeconds: restSecondsRef.current }); }, []);
   const skipRest       = useCallback(() => dispatch({ type: "SKIP_REST" }), []);
   const endWorkout     = useCallback(() => dispatch({ type: "END_WORKOUT" }), []);
 

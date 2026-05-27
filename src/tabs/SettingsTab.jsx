@@ -69,6 +69,38 @@ export default function SettingsTab({
         </Row>
       </Card>
 
+      {/* ── Workout ── */}
+      <SectionHeader label="Workout" />
+      <Card>
+        <Row style={{ borderBottom: "none" }}>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Rest Between Sets</div>
+          <div style={{ display: "flex", gap: 7 }}>
+            {[
+              { value: 30,  label: "30s" },
+              { value: 45,  label: "45s" },
+              { value: 60,  label: "1 min" },
+              { value: 90,  label: "1:30" },
+            ].map(opt => {
+              const active = (prefs.restDuration ?? 60) === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setPrefs(p => ({ ...p, restDuration: opt.value }))}
+                  style={{
+                    flex: 1, padding: "10px 0", borderRadius: 20, border: "1px solid",
+                    borderColor: active ? "#e85d26" : "var(--border2)",
+                    background: active ? "#e85d2622" : "transparent",
+                    color: active ? "#e85d26" : "var(--muted3)",
+                    fontSize: 13, fontFamily: "inherit", cursor: "pointer",
+                    fontWeight: active ? "bold" : "normal",
+                  }}
+                >{opt.label}</button>
+              );
+            })}
+          </div>
+        </Row>
+      </Card>
+
       {/* ── Physical Limitations ── */}
       <SectionHeader label="Physical Limitations" />
       <div style={{ fontSize: 11, color: "var(--muted2)", marginBottom: 12, lineHeight: 1.5 }}>

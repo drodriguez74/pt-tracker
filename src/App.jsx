@@ -97,6 +97,7 @@ export default function App() {
 
   const { session, startWorkout, completeSet, skipExercise, skipRest, endWorkout } = useWorkoutSession({
     onComplete: handleWorkoutComplete,
+    restSeconds: prefs.restDuration ?? 60,
   });
 
   // ── Computed values ────────────────────────────────────────────────────────

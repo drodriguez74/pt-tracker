@@ -1,7 +1,7 @@
 export const DAY_ABBRS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 export const AGE_RANGES = ["Under 40", "40–49", "50–59", "60+"];
 export const TARGET_WORKOUTS = 20;
-export const DEFAULT_PREFS = { name: "", ageRange: "", ailments: [], gymType: "bodyweight" };
+export const DEFAULT_PREFS = { name: "", ageRange: "", ailments: [], gymType: "bodyweight", restDuration: 60 };
 
 export const GYM_TYPES = [
   { key: "bodyweight", label: "Bodyweight Only",  note: "No equipment needed — anywhere, anytime." },

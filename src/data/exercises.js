@@ -58,8 +58,6 @@ export const ALL_EXERCISES = {
       { name: "Bird Dog",                     sets: "3x10/side", notes: "Core stability — spine neutral",                         difficulty: "beginner" },
       { name: "Plank (standard)",             sets: "3x30s",     notes: "No lower back strain — back flat",                       difficulty: "intermediate", caution: ["wrists"],                       substitutes: ["Dead Bug", "Bird Dog"] },
       { name: "Side Plank",                   sets: "3x20s/side",notes: "Obliques — back-safe",                                   difficulty: "intermediate" },
-      { name: "Glute Bridge",                 sets: "3x15",      notes: "Core + glutes — protects lower back",                    difficulty: "beginner" },
-      { name: "Single-Leg Glute Bridge",      sets: "3x10/side", notes: "More glute activation — advanced version",               difficulty: "intermediate" },
       { name: "Hollow Body Hold",             sets: "3x20s",     notes: "Military staple — low back pressed to floor",            difficulty: "intermediate", caution: ["lowerBack"],                    substitutes: ["Dead Bug", "Bird Dog"] },
       { name: "Bent-Knee Leg Raise",          sets: "3x10",      notes: "Gentler on lower back than straight-leg",                difficulty: "beginner",     caution: ["lowerBack", "hips"],            substitutes: ["Bird Dog", "Dead Bug"] },
       { name: "Crunch (controlled)",          sets: "3x12",      notes: "Upper abs — don't pull neck",                           difficulty: "beginner",     caution: ["neck", "lowerBack"],            substitutes: ["Dead Bug", "Bird Dog"] },
