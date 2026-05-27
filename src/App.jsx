@@ -487,8 +487,10 @@ export default function App() {
             workoutsCompleted={workoutsCompleted}
             missionProgress={missionProgress}
             missionDay={missionDay}
+            weekNumber={weekNumber}
             completedWorkoutDates={completedWorkoutDates}
             activeAilments={activeAilments}
+            prefs={prefs}
             restartMission={restartMission}
             setActiveTab={setActiveTab}
           />
@@ -544,7 +546,7 @@ export default function App() {
       </nav>
 
       {/* Exercise demo modal */}
-      <ExerciseDemoModal demoEx={demoEx} setDemoEx={setDemoEx} />
+      <ExerciseDemoModal demoEx={demoEx} setDemoEx={setDemoEx} prefs={prefs} AILMENTS={AILMENTS} />
 
       {/* Toast */}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}

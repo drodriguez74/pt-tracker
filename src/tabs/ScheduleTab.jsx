@@ -1,13 +1,117 @@
 import { useRef, useState } from "react";
 import { GiMeditation } from "react-icons/gi";
-import { ALL_EXERCISES, WARMUP_PRESETS } from "../data/exercises";
+import { ALL_EXERCISES, WARMUP_PRESETS, AILMENTS } from "../data/exercises";
 import { weekSchedule, DAY_ABBRS, getThisWeekDates } from "../data/schedule";
+import { askCoach } from "../utils/aiCoach";
+
+const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
 
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
+}
+
+// ── Pre-workout AI Brief ──────────────────────────────────────────────────────
+
+function PreWorkoutBrief({ dayExercises, dayData, prefs, completed, todayStr }) {
+  const [brief, setBrief] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  const cacheKey = `pt-brief:${todayStr}`;
+
+  function fetchBrief() {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) { setBrief(cached); return; }
+
+    setLoading(true);
+
+    // Derive yesterday's exercise names from completed log
+    const yesterday = new Date(new Date(todayStr).getTime() - 86400000).toISOString().split("T")[0];
+    const yesterdayExs = [...new Set(
+      Object.keys(completed)
+        .filter(k => k.startsWith(yesterday + ":") && completed[k])
+        .map(k => k.split(":")[1].replace(/-\d$/, ""))
+    )];
+
+    const ailmentDescs = AILMENTS
+      .filter(a => prefs?.ailments?.includes(a.key))
+      .map(a => a.label)
+      .join(", ");
+
+    const exerciseList = dayExercises.map(ex => `${ex.name} (${ex.sets})`).join(", ");
+
+    askCoach(
+      `You are a practical fitness coach. Give 2-3 specific modifications or tips for today's workout.
+Format each point with a • prefix. Reference exercises by their exact name.
+Be direct — no preamble, no generic encouragement.`,
+      `Today: ${dayData?.focus} — ${exerciseList}
+Yesterday: ${yesterdayExs.length ? yesterdayExs.join(", ") : "rest day"}
+User: ${prefs?.ageRange || "adult"}${ailmentDescs ? `, limitations: ${ailmentDescs}` : ""}`,
+      250
+    ).then(text => {
+      if (text) {
+        localStorage.setItem(cacheKey, text);
+        setBrief(text);
+      }
+      setLoading(false);
+    });
+  }
+
+  if (dismissed) return null;
+
+  if (!brief && !loading) {
+    return (
+      <button
+        onClick={fetchBrief}
+        style={{
+          width: "100%", padding: "10px", borderRadius: 10, marginBottom: 8,
+          border: "1px solid #e85d2644", background: "var(--mission-surface)",
+          color: "#e85d26", fontSize: 12, fontFamily: "inherit",
+          cursor: "pointer", letterSpacing: 0.5,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+        }}
+      >
+        ✦ Get coaching tips for today
+      </button>
+    );
+  }
+
+  return (
+    <div style={{
+      background: "var(--mission-surface)", border: "1px solid #e85d2633",
+      borderRadius: 10, padding: "12px 14px", marginBottom: 8,
+      position: "relative",
+    }}>
+      <button
+        onClick={() => setDismissed(true)}
+        style={{ position: "absolute", top: 8, right: 10, background: "none", border: "none", color: "var(--muted3)", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}
+      >✕</button>
+      <div style={{ fontSize: 9, color: "#e85d26", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>
+        Coach's Tips
+      </div>
+      {loading ? (
+        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{
+              width: 5, height: 5, borderRadius: "50%", background: "#e85d2666",
+              animation: "breathe 1.2s ease-in-out infinite",
+              animationDelay: `${i * 0.18}s`,
+            }} />
+          ))}
+        </div>
+      ) : (
+        brief?.split("\n").filter(l => l.trim()).map((line, i, arr) => (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: i < arr.length - 1 ? 6 : 0 }}>
+            <span style={{ color: "#e85d26", fontSize: 10, marginTop: 2, flexShrink: 0 }}>▸</span>
+            <span style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.45 }}>{line.replace(/^[•\-]\s*/, "")}</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
 }
 
 export default function ScheduleTab({
@@ -171,7 +275,7 @@ export default function ScheduleTab({
             background: dayDone === dayExercises.length ? "var(--surface2)" : "#e85d26",
             color: dayDone === dayExercises.length ? "var(--muted)" : "#fff",
             fontSize: 15, fontWeight: "bold", letterSpacing: 1,
-            fontFamily: "inherit", cursor: "pointer", marginBottom: 12,
+            fontFamily: "inherit", cursor: "pointer", marginBottom: 8,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           }}
         >
@@ -179,6 +283,17 @@ export default function ScheduleTab({
             ? "✓ Workout Complete"
             : dayDone > 0 ? "▶ Continue Workout" : "▶ Start Workout"}
         </button>
+      )}
+
+      {/* ── Pre-workout AI brief (today, training days, not yet complete) ── */}
+      {dayExercises.length > 0 && isToday && dayDone < dayExercises.length && API_KEY && (
+        <PreWorkoutBrief
+          dayExercises={dayExercises}
+          dayData={dayData}
+          prefs={prefs}
+          completed={completed}
+          todayStr={todayStr}
+        />
       )}
 
       {/* ── Progression banner ── */}

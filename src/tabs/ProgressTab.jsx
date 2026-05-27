@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { weekSchedule, DAY_ABBRS, TARGET_WORKOUTS } from "../data/schedule";
+import { weekSchedule, DAY_ABBRS, TARGET_WORKOUTS, PROGRESSION } from "../data/schedule";
+import { askCoach } from "../utils/aiCoach";
+
+const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+const NARRATIVE_KEY = "pt-weekly-narrative";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -350,9 +354,80 @@ function HeatGrid({ completedDates }) {
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 
+function WeeklyNarrative({ prefs, streak, workoutsCompleted, missionDay, weekNumber, completedWorkoutDates }) {
+  const [narrative, setNarrative] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!API_KEY || workoutsCompleted === 0) return;
+
+    const todayStr = new Date().toISOString().split("T")[0];
+    try {
+      const cached = JSON.parse(localStorage.getItem(NARRATIVE_KEY) || "null");
+      if (cached?.date === todayStr) { setNarrative(cached.text); return; }
+    } catch { /* stale */ }
+
+    setLoading(true);
+    const weekProg = PROGRESSION[Math.min(weekNumber, 3)];
+
+    // Workouts this week vs last week
+    const thisWeekStart = new Date();
+    thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
+    const thisWeekStr = thisWeekStart.toISOString().split("T")[0];
+    const lastWeekStr = new Date(thisWeekStart.getTime() - 7 * 86400000).toISOString().split("T")[0];
+    const thisWeekCount = completedWorkoutDates.filter(d => d >= thisWeekStr).length;
+    const lastWeekCount = completedWorkoutDates.filter(d => d >= lastWeekStr && d < thisWeekStr).length;
+
+    askCoach(
+      `You are an encouraging military fitness coach writing a brief weekly progress summary.
+Write exactly 2-3 sentences. Be specific about numbers and trends.
+End with one forward-looking sentence. No bullet points — natural paragraph only.`,
+      `User: ${prefs?.name || "Soldier"}, ${prefs?.ageRange || "adult"}
+Mission: Day ${missionDay}, ${weekProg.label} — ${weekProg.sub}
+Streak: ${streak.current} days (best: ${streak.best})
+Total workouts: ${workoutsCompleted}
+This week: ${thisWeekCount} workout(s), last week: ${lastWeekCount}
+Ailments: ${prefs?.ailments?.length ? prefs.ailments.join(", ") : "none"}`,
+      200
+    ).then(text => {
+      if (text) {
+        localStorage.setItem(NARRATIVE_KEY, JSON.stringify({ date: todayStr, text }));
+        setNarrative(text);
+      }
+      setLoading(false);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!API_KEY || (workoutsCompleted === 0 && !loading)) return null;
+
+  return (
+    <div style={{
+      background: "var(--mission-surface)", border: "1px solid #e85d2633",
+      borderRadius: 13, padding: "14px 16px", marginBottom: 20,
+    }}>
+      <div style={{ fontSize: 9, color: "#e85d26", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>
+        Coach's Take
+      </div>
+      {loading ? (
+        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{
+              width: 5, height: 5, borderRadius: "50%", background: "#e85d2666",
+              animation: "breathe 1.2s ease-in-out infinite",
+              animationDelay: `${i * 0.18}s`,
+            }} />
+          ))}
+        </div>
+      ) : (
+        <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6, margin: 0 }}>{narrative}</p>
+      )}
+    </div>
+  );
+}
+
 export default function ProgressTab({
   streak, missionComplete, workoutsCompleted, missionProgress, missionDay,
-  completedWorkoutDates, activeAilments,
+  completedWorkoutDates, activeAilments, prefs, weekNumber,
   restartMission, setActiveTab,
 }) {
   const radarScores = useMemo(
@@ -362,6 +437,16 @@ export default function ProgressTab({
 
   return (
     <>
+      {/* ── AI Weekly Narrative ── */}
+      <WeeklyNarrative
+        prefs={prefs}
+        streak={streak}
+        workoutsCompleted={workoutsCompleted}
+        missionDay={missionDay}
+        weekNumber={weekNumber}
+        completedWorkoutDates={completedWorkoutDates}
+      />
+
       {/* ── Mission ring + streak ── */}
       <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 20 }}>
         <MissionRing current={workoutsCompleted} total={TARGET_WORKOUTS} complete={missionComplete} />

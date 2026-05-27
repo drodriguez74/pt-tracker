@@ -1,8 +1,77 @@
+import { useState, useEffect } from "react";
 import { CatIcon } from "./CatIcon";
 import { ALL_EXERCISES, exerciseCategoryMap } from "../data/exercises";
 import { EXERCISE_DEMOS } from "../data/exerciseDemos";
+import { askCoach } from "../utils/aiCoach";
 
-export default function ExerciseDemoModal({ demoEx, setDemoEx }) {
+const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+
+function getAilmentCacheKey(exName, ailments) {
+  return `pt-form-tips:${exName}:${[...ailments].sort().join(",")}`;
+}
+
+function AiFormTips({ demoEx, prefs, AILMENTS }) {
+  const [tip, setTip] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!prefs?.ailments?.length || !API_KEY) return;
+
+    const cacheKey = getAilmentCacheKey(demoEx.name, prefs.ailments);
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) { setTip(cached); return; }
+
+    setLoading(true);
+    const ailmentDescs = AILMENTS
+      .filter(a => prefs.ailments.includes(a.key))
+      .map(a => `${a.label} (${a.note})`)
+      .join("; ");
+
+    askCoach(
+      `You are a physical therapist and certified strength coach.
+Give 2-3 targeted form cues for the exercise based on the user's physical limitations.
+Format each cue with a • prefix. Be specific and actionable — no generic advice.
+Keep total response under 80 words.`,
+      `Exercise: ${demoEx.name} — ${demoEx.sets}, ${demoEx.notes}
+User: ${prefs.ageRange || "adult"}, Limitations: ${ailmentDescs}`,
+      200
+    ).then(text => {
+      if (text) {
+        localStorage.setItem(cacheKey, text);
+        setTip(text);
+      }
+      setLoading(false);
+    });
+  }, [demoEx.name]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!prefs?.ailments?.length || !API_KEY) return null;
+
+  return (
+    <div style={{
+      background: "var(--info-surface)", border: "1px solid #e85d2633",
+      borderRadius: 10, padding: "12px 14px", marginBottom: 16,
+    }}>
+      <div style={{ fontSize: 9, color: "#e85d26", letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>
+        Personalized for You
+      </div>
+      {loading ? (
+        <div style={{ fontSize: 11, color: "var(--muted3)", display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--muted3)", animation: "breathe 1.2s ease-in-out infinite" }} />
+          Generating tips for your profile...
+        </div>
+      ) : tip ? (
+        tip.split("\n").filter(l => l.trim()).map((line, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: i < tip.split("\n").filter(l => l.trim()).length - 1 ? 7 : 0 }}>
+            <span style={{ color: "#e85d26", fontSize: 10, marginTop: 2, flexShrink: 0 }}>▸</span>
+            <span style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.45 }}>{line.replace(/^[•\-]\s*/, "")}</span>
+          </div>
+        ))
+      ) : null}
+    </div>
+  );
+}
+
+export default function ExerciseDemoModal({ demoEx, setDemoEx, prefs, AILMENTS }) {
   if (!demoEx) return null;
 
   const demo = EXERCISE_DEMOS[demoEx.name];
@@ -52,6 +121,9 @@ export default function ExerciseDemoModal({ demoEx, setDemoEx }) {
             </div>
           </div>
         )}
+
+        {/* AI personalized tips */}
+        <AiFormTips demoEx={demoEx} prefs={prefs} AILMENTS={AILMENTS} />
 
         {/* Steps */}
         {demo?.steps.map((step, i) => (
