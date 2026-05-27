@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { FiSun, FiMoon, FiBook, FiCalendar, FiTrendingUp, FiSettings } from "react-icons/fi";
+import { FiSun, FiMoon, FiBook, FiCalendar, FiTrendingUp, FiSettings, FiMessageSquare } from "react-icons/fi";
 import { useWorkoutSession } from "./workout/useWorkoutSession";
 import ActiveWorkoutView from "./workout/ActiveWorkoutView";
 import ExerciseDemoModal from "./components/ExerciseDemoModal";
 import Toast from "./components/Toast";
+import CoachChat from "./components/CoachChat";
 import LibraryTab from "./tabs/LibraryTab";
 import ScheduleTab from "./tabs/ScheduleTab";
 import ProgressTab from "./tabs/ProgressTab";
@@ -71,6 +72,7 @@ export default function App() {
     loadStorage("pt-completed-dates", [])
   );
   const [toast, setToast] = useState(null);
+  const [coachOpen, setCoachOpen] = useState(false);
   const prevStreakRef = useRef(null);
 
   // ── Workout session ────────────────────────────────────────────────────────
@@ -546,6 +548,41 @@ export default function App() {
 
       {/* Toast */}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+
+      {/* ── AI Coach FAB ── */}
+      <div style={{
+        position: "fixed", bottom: 76, left: "50%", transform: "translateX(-50%)",
+        width: "100%", maxWidth: 480, pointerEvents: "none", zIndex: 60,
+      }}>
+        <button
+          onClick={() => setCoachOpen(true)}
+          style={{
+            position: "absolute", right: 18, bottom: 0,
+            width: 52, height: 52, borderRadius: "50%",
+            background: "#e85d26", border: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 20px #e85d2666", cursor: "pointer",
+            pointerEvents: "auto",
+          }}
+        >
+          <FiMessageSquare size={22} color="#fff" />
+        </button>
+      </div>
+
+      {/* ── AI Coach Chat ── */}
+      <CoachChat
+        isOpen={coachOpen}
+        onClose={() => setCoachOpen(false)}
+        prefs={prefs}
+        missionDay={missionDay}
+        weekNumber={weekNumber}
+        streak={streak}
+        dayData={dayData}
+        dayExercises={dayExercises}
+        completed={completed}
+        completedWorkoutDates={completedWorkoutDates}
+        AILMENTS={AILMENTS}
+      />
     </div>
   );
 }
