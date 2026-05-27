@@ -231,6 +231,3 @@ pt-tracker/
 
 Personal use only. Not intended for redistribution.
 
----
-
-*Built with [Claude Code](https://claude.ai/code) — Anthropic's AI coding assistant.*
