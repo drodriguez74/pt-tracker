@@ -87,7 +87,8 @@ export default function App() {
         : 0;
       for (let i = 0; i < setsCompleted; i++) {
         const k = `${today}:${ex.name}-${i}`;
-        setCompleted(p => ({ ...p, [k]: true }));
+        const reps = finishedSession.repLog?.[`${exIdx}-${i}`] ?? true;
+        setCompleted(p => ({ ...p, [k]: reps }));
       }
     });
     if (!completedWorkoutDates.includes(today)) {

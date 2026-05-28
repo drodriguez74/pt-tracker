@@ -49,6 +49,7 @@ function reducer(state, action) {
         exerciseSecondsLeft: getExerciseSeconds(exercises[0]),
         startedAt: Date.now(),
         skipped: [],
+        repLog: {},
       };
     }
 
@@ -57,14 +58,17 @@ function reducer(state, action) {
       const isLastSet = setIdx >= TOTAL_SETS - 1;
       const isLastExercise = exerciseIdx >= exercises.length - 1;
       const rest = action.restSeconds ?? state.restTotalSeconds ?? 60;
+      const repLog = action.reps != null
+        ? { ...state.repLog, [`${exerciseIdx}-${setIdx}`]: action.reps }
+        : state.repLog;
 
       if (!isLastSet) {
-        return { ...state, phase: "resting", restSecondsLeft: rest, restTotalSeconds: rest, setIdx: setIdx + 1 };
+        return { ...state, repLog, phase: "resting", restSecondsLeft: rest, restTotalSeconds: rest, setIdx: setIdx + 1 };
       }
       if (!isLastExercise) {
-        return { ...state, phase: "resting", restSecondsLeft: rest, restTotalSeconds: rest, setIdx: 0, exerciseIdx: exerciseIdx + 1 };
+        return { ...state, repLog, phase: "resting", restSecondsLeft: rest, restTotalSeconds: rest, setIdx: 0, exerciseIdx: exerciseIdx + 1 };
       }
-      return { ...state, phase: "done" };
+      return { ...state, repLog, phase: "done" };
     }
 
     case "REST_TICK": {
@@ -129,6 +133,7 @@ const initialState = {
   exerciseSecondsLeft: null,
   startedAt: null,
   skipped: [],
+  repLog: {},
 };
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -274,7 +279,7 @@ export function useWorkoutSession({ onComplete, restSeconds = 60 }) {
     dispatch({ type: "START_WORKOUT", exercises: [...exercises], restSeconds: restSecondsRef.current });
   }, []);
 
-  const completeSet    = useCallback(() => dispatch({ type: "COMPLETE_SET", restSeconds: restSecondsRef.current }), []);
+  const completeSet    = useCallback((reps) => dispatch({ type: "COMPLETE_SET", restSeconds: restSecondsRef.current, reps }), []);
   const skipExercise   = useCallback(() => { vibrate([10, 40, 10]); dispatch({ type: "SKIP_EXERCISE", restSeconds: restSecondsRef.current }); }, []);
   const skipRest       = useCallback(() => dispatch({ type: "SKIP_REST" }), []);
   const endWorkout     = useCallback(() => dispatch({ type: "END_WORKOUT" }), []);

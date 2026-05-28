@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useHandsFreeInput } from "./useHandsFreeInput";
 
 const TOTAL_SETS = 3;
@@ -8,6 +8,83 @@ function getExerciseSeconds(ex) {
   if (ex.sets.includes("/side") || ex.sets.includes("/dir")) return null;
   const match = ex.sets.match(/x(\d+)s/);
   return match ? parseInt(match[1], 10) : null;
+}
+
+function parseTargetReps(sets) {
+  if (!sets || /x\d+s/.test(sets)) return null; // timed exercise — no rep count
+  const m = sets.match(/x(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+// ─── Rep Counter ──────────────────────────────────────────────────────────────
+
+function RepCounter({ targetReps, onConfirm }) {
+  const [count, setCount] = useState(targetReps);
+  return (
+    <div
+      onClick={() => onConfirm(count)}
+      style={{
+        position: "fixed", inset: 0, background: "#000000cc", zIndex: 300,
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: 20, padding: "32px 24px 24px",
+          width: "100%", maxWidth: 300, textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: 9, letterSpacing: 3, color: "var(--muted3)", textTransform: "uppercase", marginBottom: 20 }}>
+          Reps completed
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, marginBottom: 28 }}>
+          <button
+            onClick={() => setCount(c => Math.max(1, c - 1))}
+            style={{
+              width: 52, height: 52, borderRadius: "50%", flexShrink: 0,
+              border: "1px solid var(--border2)", background: "var(--surface2)",
+              fontSize: 26, cursor: "pointer", fontFamily: "inherit", color: "var(--text)",
+            }}
+          >−</button>
+
+          <div>
+            <div style={{ fontSize: 72, fontWeight: 900, lineHeight: 1, color: "var(--text)" }}>{count}</div>
+            {count !== targetReps && (
+              <div style={{ fontSize: 10, color: "var(--muted3)", marginTop: 4 }}>target {targetReps}</div>
+            )}
+          </div>
+
+          <button
+            onClick={() => setCount(c => c + 1)}
+            style={{
+              width: 52, height: 52, borderRadius: "50%", flexShrink: 0,
+              border: "1px solid var(--border2)", background: "var(--surface2)",
+              fontSize: 26, cursor: "pointer", fontFamily: "inherit", color: "var(--text)",
+            }}
+          >+</button>
+        </div>
+
+        <button
+          onClick={() => onConfirm(count)}
+          style={{
+            width: "100%", padding: "18px", borderRadius: 14,
+            border: "none", background: "#e85d26",
+            color: "#fff", fontSize: 16, fontWeight: "bold",
+            fontFamily: "inherit", cursor: "pointer", letterSpacing: 0.5,
+          }}
+        >
+          Log {count} rep{count !== 1 ? "s" : ""}
+        </button>
+
+        <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 12 }}>
+          or tap outside to log {targetReps}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Progress Rail ────────────────────────────────────────────────────────────
@@ -256,22 +333,29 @@ function DoneScreen({ session, onClose }) {
 export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onSkipExercise, onSkipRest, onEnd }) {
   const [confirmExit, setConfirmExit] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [pendingRep, setPendingRep] = useState(null); // targetReps while counter is open
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
+
+  const ex = session.exercises[session.exerciseIdx];
+  const timerTotal = getExerciseSeconds(ex);
+  const isTimed = session.exerciseSecondsLeft !== null && timerTotal !== null;
+  const targetReps = parseTargetReps(ex?.sets);
+
+  const accentColor = dayData?.color || "#e85d26";
+  const isLastSet = session.setIdx === TOTAL_SETS - 1;
+  const isLastExercise = session.exerciseIdx === session.exercises.length - 1;
+
+  // Voice/knock path: auto-log target reps without showing the overlay
+  const completeSetHandsFree = useCallback(() => {
+    onCompleteSet(targetReps ?? undefined);
+  }, [onCompleteSet, targetReps]);
 
   const {
     voiceActive, voiceSupported, micError,
     knockActive, knockNeedsPermission, requestKnockPermission,
     lastCommand,
-  } = useHandsFreeInput({ phase: session.phase, onCompleteSet, onSkipExercise, onSkipRest, voiceEnabled });
-
-  const ex = session.exercises[session.exerciseIdx];
-  const timerTotal = getExerciseSeconds(ex);
-  const isTimed = session.exerciseSecondsLeft !== null && timerTotal !== null;
-
-  const accentColor = dayData?.color || "#e85d26";
-  const isLastSet = session.setIdx === TOTAL_SETS - 1;
-  const isLastExercise = session.exerciseIdx === session.exercises.length - 1;
+  } = useHandsFreeInput({ phase: session.phase, onCompleteSet: completeSetHandsFree, onSkipExercise, onSkipRest, voiceEnabled });
 
   function handleTouchStart(e) {
     touchStartX.current = e.touches[0].clientX;
@@ -285,8 +369,13 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
     touchStartX.current = null;
     touchStartY.current = null;
     if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
-    if (dx > 0) onCompleteSet();
-    else onSkipExercise();
+    if (dx > 0) {
+      const target = parseTargetReps(session.exercises[session.exerciseIdx]?.sets);
+      if (target !== null && session.exerciseSecondsLeft === null) setPendingRep(target);
+      else onCompleteSet();
+    } else {
+      onSkipExercise();
+    }
   }
 
   return (
@@ -482,7 +571,14 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
 
           {/* Primary action */}
           <button
-            onClick={onCompleteSet}
+            onClick={() => {
+              const target = parseTargetReps(ex?.sets);
+              if (!isTimed && target !== null) {
+                setPendingRep(target); // open rep counter
+              } else {
+                onCompleteSet(); // timed or unknown — skip counter
+              }
+            }}
             style={{
               width: "100%", padding: "22px 0",
               borderRadius: 16, border: "none",
@@ -513,6 +609,14 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
             Skip Exercise
           </button>
         </div>
+      )}
+
+      {/* ── Rep counter overlay ── */}
+      {pendingRep !== null && (
+        <RepCounter
+          targetReps={pendingRep}
+          onConfirm={(reps) => { setPendingRep(null); onCompleteSet(reps); }}
+        />
       )}
 
       {/* ── Command flash ── */}

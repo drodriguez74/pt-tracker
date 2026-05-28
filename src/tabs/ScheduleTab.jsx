@@ -588,13 +588,15 @@ export default function ScheduleTab({
                     onClick={e => e.stopPropagation()}
                   >
                     {[0, 1, 2].map(i => {
-                      const done = !!completed[`${todayStr}:${ex.name}-${i}`];
+                      const val = completed[`${todayStr}:${ex.name}-${i}`];
+                      const done = !!val;
+                      const reps = typeof val === "number" ? val : null;
                       return (
                         <div
                           key={i}
                           onClick={() => handleSetTap(ex.name, i)}
                           style={{
-                            width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+                            width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
                             display: "flex", alignItems: "center", justifyContent: "center",
                             background: done ? "#4ade8022" : "transparent",
                             border: `2px solid ${done ? "#4ade80" : "var(--border3)"}`,
@@ -603,7 +605,9 @@ export default function ScheduleTab({
                           }}
                         >
                           {done && (
-                            <span style={{ fontSize: 9, color: "#4ade80", lineHeight: 1 }}>✓</span>
+                            <span style={{ fontSize: reps !== null ? 9 : 9, color: "#4ade80", lineHeight: 1, fontWeight: "bold" }}>
+                              {reps !== null ? reps : "✓"}
+                            </span>
                           )}
                         </div>
                       );
