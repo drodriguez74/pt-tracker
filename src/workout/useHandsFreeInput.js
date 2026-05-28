@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 const KNOCK_THRESHOLD = 25; // m/s² — sharp tap spike
 const KNOCK_WINDOW_MS = 500; // max gap between two knocks
 
-export function useHandsFreeInput({ phase, onCompleteSet, onSkipExercise, onSkipRest }) {
+export function useHandsFreeInput({ phase, onCompleteSet, onSkipExercise, onSkipRest, voiceEnabled }) {
   const [voiceActive, setVoiceActive]   = useState(false);
   const [voiceSupported]                = useState(() => !!(window.SpeechRecognition || window.webkitSpeechRecognition));
   const [micError, setMicError]         = useState(null);
@@ -13,11 +13,13 @@ export function useHandsFreeInput({ phase, onCompleteSet, onSkipExercise, onSkip
 
   const recRef           = useRef(null);
   const phaseRef         = useRef(phase);
+  const voiceEnabledRef  = useRef(voiceEnabled);
   const actionsRef       = useRef({ onCompleteSet, onSkipExercise, onSkipRest });
   const knockRef         = useRef({ lastTime: 0, count: 0, cooldown: false });
   const knockListenerRef = useRef(null);
 
   useEffect(() => { phaseRef.current = phase; }, [phase]);
+  useEffect(() => { voiceEnabledRef.current = voiceEnabled; }, [voiceEnabled]);
   useEffect(() => { actionsRef.current = { onCompleteSet, onSkipExercise, onSkipRest }; }, [onCompleteSet, onSkipExercise, onSkipRest]);
 
   const flash = useCallback((msg) => {
@@ -36,7 +38,7 @@ export function useHandsFreeInput({ phase, onCompleteSet, onSkipExercise, onSkip
     }
   }, [flash]);
 
-  // ── Voice ────────────────────────────────────────────────────────────────────
+  // ── Voice (opt-in only — keeps background audio alive when off) ──────────────
   useEffect(() => {
     if (!voiceSupported) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -60,10 +62,10 @@ export function useHandsFreeInput({ phase, onCompleteSet, onSkipExercise, onSkip
       else if (e.error !== "no-speech" && e.error !== "aborted") setMicError(e.error);
     };
 
-    // Auto-restart so recognition stays alive between utterances
     r.onend = () => {
       setVoiceActive(false);
-      if (["exercise", "resting"].includes(phaseRef.current)) {
+      // Only auto-restart if voice is still enabled and workout is active
+      if (voiceEnabledRef.current && ["exercise", "resting"].includes(phaseRef.current)) {
         setTimeout(() => {
           try { r.start(); setVoiceActive(true); } catch (_) {}
         }, 250);
@@ -73,18 +75,19 @@ export function useHandsFreeInput({ phase, onCompleteSet, onSkipExercise, onSkip
     return () => { try { r.abort(); } catch (_) {} };
   }, [voiceSupported, trigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Start / stop recognition with phase
+  // Start / stop recognition based on voiceEnabled + phase
   useEffect(() => {
     const r = recRef.current;
     if (!r) return;
-    if (phase === "exercise" || phase === "resting") {
+    const inActivePhase = phase === "exercise" || phase === "resting";
+    if (voiceEnabled && inActivePhase) {
       setMicError(null);
       try { r.start(); setVoiceActive(true); } catch (_) {}
     } else {
       try { r.abort(); } catch (_) {}
       setVoiceActive(false);
     }
-  }, [phase]);
+  }, [voiceEnabled, phase]);
 
   // ── Double-knock (accelerometer) ─────────────────────────────────────────────
   const setupKnock = useCallback(() => {
@@ -121,9 +124,9 @@ export function useHandsFreeInput({ phase, onCompleteSet, onSkipExercise, onSkip
   useEffect(() => {
     if (!window.DeviceMotionEvent) return;
     if (typeof DeviceMotionEvent.requestPermission === "function") {
-      setKnockNeedsPermission(true); // iOS 13+ needs a user gesture first
+      setKnockNeedsPermission(true);
     } else {
-      setupKnock(); // Android / desktop — auto-setup
+      setupKnock();
     }
     return () => {
       if (knockListenerRef.current) {

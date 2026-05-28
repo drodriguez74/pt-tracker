@@ -255,6 +255,7 @@ function DoneScreen({ session, onClose }) {
 
 export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onSkipExercise, onSkipRest, onEnd }) {
   const [confirmExit, setConfirmExit] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
 
@@ -262,7 +263,7 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
     voiceActive, voiceSupported, micError,
     knockActive, knockNeedsPermission, requestKnockPermission,
     lastCommand,
-  } = useHandsFreeInput({ phase: session.phase, onCompleteSet, onSkipExercise, onSkipRest });
+  } = useHandsFreeInput({ phase: session.phase, onCompleteSet, onSkipExercise, onSkipRest, voiceEnabled });
 
   const ex = session.exercises[session.exerciseIdx];
   const timerTotal = getExerciseSeconds(ex);
@@ -327,33 +328,54 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
           color={accentColor}
         />
 
-        {/* Hands-free status */}
+        {/* Hands-free controls */}
         {session.phase !== "done" && (
-          <div style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center", paddingTop: 7 }}>
-            {voiceSupported && (
-              <span style={{
-                fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase",
-                color: micError === "blocked" ? "#ef4444" : voiceActive ? "#4ade80" : "var(--muted3)",
-              }}>
-                {micError === "blocked" ? "🎙 mic blocked" : voiceActive ? "🎙 listening" : "🎙 off"}
-              </span>
-            )}
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", alignItems: "center", paddingTop: 8 }}>
+            {/* Knock indicator */}
             {knockActive && (
-              <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase", color: "#4ade80" }}>
-                ✊ tap ready
-              </span>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 5,
+                padding: "4px 10px", borderRadius: 20,
+                background: "#4ade8018", border: "1px solid #4ade8044",
+              }}>
+                <span style={{ fontSize: 11 }}>✊</span>
+                <span style={{ fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase", color: "#4ade80" }}>double-knock</span>
+              </div>
             )}
             {knockNeedsPermission && (
               <button
                 onClick={requestKnockPermission}
                 style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "4px 10px", borderRadius: 20,
+                  background: "#e85d2618", border: "1px solid #e85d2644",
                   fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase",
-                  color: "#e85d26", background: "none",
-                  border: "1px solid #e85d2666", borderRadius: 4,
-                  padding: "2px 8px", cursor: "pointer", fontFamily: "inherit",
+                  color: "#e85d26", cursor: "pointer", fontFamily: "inherit",
                 }}
               >
                 ✊ enable tap
+              </button>
+            )}
+            {/* Voice toggle — off by default to keep music playing */}
+            {voiceSupported && (
+              <button
+                onClick={() => setVoiceEnabled(v => !v)}
+                title={voiceEnabled ? "Disable voice (restores music)" : "Enable voice commands (interrupts music)"}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "4px 10px", borderRadius: 20, cursor: "pointer",
+                  fontFamily: "inherit",
+                  background: voiceEnabled ? "#4ade8018" : "transparent",
+                  border: `1px solid ${micError === "blocked" ? "#ef444444" : voiceEnabled ? "#4ade8044" : "var(--border2)"}`,
+                }}
+              >
+                <span style={{ fontSize: 11 }}>{micError === "blocked" ? "🚫" : "🎙"}</span>
+                <span style={{
+                  fontSize: 9, letterSpacing: 1.5, textTransform: "uppercase",
+                  color: micError === "blocked" ? "#ef4444" : voiceEnabled ? "#4ade80" : "var(--muted3)",
+                }}>
+                  {micError === "blocked" ? "blocked" : voiceEnabled ? (voiceActive ? "listening" : "starting…") : "voice off"}
+                </span>
               </button>
             )}
           </div>
