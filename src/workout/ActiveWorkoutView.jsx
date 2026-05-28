@@ -247,31 +247,29 @@ function RestScreen({ secondsLeft, totalSeconds, onSkip, nextExercise, nextSet }
 
 // ─── Done Screen ──────────────────────────────────────────────────────────────
 
-function DoneScreen({ session, onClose }) {
+function DoneScreen({ session, onClose, onViewDemo }) {
   const elapsed = session.startedAt
     ? Math.round((Date.now() - session.startedAt) / 60000)
     : 0;
-  const completedCount = session.exercises.length - session.skipped.length;
-  const totalSets = completedCount * TOTAL_SETS;
+  const completedExercises = session.exercises.filter(ex => !session.skipped.includes(ex.name));
+  const totalSets = completedExercises.length * TOTAL_SETS;
 
   return (
     <div style={{
-      flex: 1, display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      padding: "0 32px", textAlign: "center",
+      flex: 1, overflowY: "auto", padding: "28px 24px 32px", textAlign: "center",
     }}>
-      <div style={{ fontSize: 64, marginBottom: 12, animation: "fadeUp 0.5s ease" }}>🎖️</div>
+      <div style={{ fontSize: 56, marginBottom: 10, animation: "fadeUp 0.5s ease" }}>🎖️</div>
 
       <div style={{
         fontSize: 10, letterSpacing: 4, color: "#4ade80",
-        textTransform: "uppercase", marginBottom: 10,
+        textTransform: "uppercase", marginBottom: 8,
         animation: "fadeUp 0.5s 0.1s ease both",
       }}>
         Mission Complete
       </div>
 
       <div style={{
-        fontSize: 30, fontWeight: 900, marginBottom: 32,
+        fontSize: 28, fontWeight: 900, marginBottom: 24,
         animation: "fadeUp 0.5s 0.15s ease both",
       }}>
         Workout Done
@@ -279,38 +277,56 @@ function DoneScreen({ session, onClose }) {
 
       {/* Stats */}
       <div style={{
-        display: "flex", gap: 10, marginBottom: 36, width: "100%",
+        display: "flex", gap: 10, marginBottom: 24, width: "100%",
         animation: "fadeUp 0.5s 0.2s ease both",
       }}>
         {[
-          { label: "Exercises", value: completedCount,       color: "#e85d26" },
-          { label: "Minutes",   value: elapsed || "<1",      color: "#8b5cf6" },
-          { label: "Sets",      value: totalSets,             color: "#10b981" },
+          { label: "Exercises", value: completedExercises.length, color: "#e85d26" },
+          { label: "Minutes",   value: elapsed || "<1",           color: "#8b5cf6" },
+          { label: "Sets",      value: totalSets,                 color: "#10b981" },
         ].map(s => (
           <div key={s.label} style={{
             flex: 1, background: "var(--surface2)",
             border: `1px solid ${s.color}33`,
             borderTop: `3px solid ${s.color}`,
-            borderRadius: 12, padding: "16px 8px", textAlign: "center",
+            borderRadius: 12, padding: "14px 8px", textAlign: "center",
           }}>
-            <div style={{ fontSize: 28, fontWeight: 900, color: s.color, lineHeight: 1 }}>
-              {s.value}
-            </div>
-            <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 1, marginTop: 6, textTransform: "uppercase" }}>
-              {s.label}
-            </div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 1, marginTop: 5, textTransform: "uppercase" }}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      {session.skipped.length > 0 && (
-        <div style={{
-          fontSize: 11, color: "var(--muted)", marginBottom: 24,
-          animation: "fadeUp 0.5s 0.25s ease both",
-        }}>
-          Skipped: {session.skipped.join(", ")}
+      {/* Exercise list */}
+      <div style={{ width: "100%", textAlign: "left", marginBottom: 24, animation: "fadeUp 0.5s 0.25s ease both" }}>
+        <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
+          Exercises Completed
         </div>
-      )}
+        {completedExercises.map((ex, i) => (
+          <button
+            key={i}
+            onClick={() => onViewDemo?.(ex)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              width: "100%", background: "var(--surface2)", border: "1px solid var(--border)",
+              borderRadius: 10, padding: "11px 13px", marginBottom: 6,
+              cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+              boxSizing: "border-box",
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 13, fontWeight: "bold", color: "var(--text)" }}>{ex.name}</div>
+              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{ex.sets}</div>
+            </div>
+            <span style={{ fontSize: 12, color: "var(--muted3)", flexShrink: 0, marginLeft: 8 }}>ⓘ</span>
+          </button>
+        ))}
+        {session.skipped.length > 0 && (
+          <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 6 }}>
+            Skipped: {session.skipped.join(", ")}
+          </div>
+        )}
+      </div>
 
       <button
         onClick={onClose}
@@ -319,7 +335,6 @@ function DoneScreen({ session, onClose }) {
           borderRadius: 14, border: "none", background: "#e85d26",
           color: "#fff", fontSize: 16, fontWeight: "bold",
           fontFamily: "inherit", cursor: "pointer", letterSpacing: 1,
-          animation: "fadeUp 0.5s 0.3s ease both",
         }}
       >
         Back to Schedule
@@ -330,7 +345,7 @@ function DoneScreen({ session, onClose }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onSkipExercise, onSkipRest, onEnd }) {
+export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onSkipExercise, onSkipRest, onEnd, onViewDemo }) {
   const [confirmExit, setConfirmExit] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [pendingRep, setPendingRep] = useState(null); // targetReps while counter is open
@@ -473,7 +488,7 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
 
       {/* ── Body ── */}
       {session.phase === "done" ? (
-        <DoneScreen session={session} onClose={onEnd} />
+        <DoneScreen session={session} onClose={onEnd} onViewDemo={onViewDemo} />
 
       ) : session.phase === "resting" ? (
         <RestScreen
@@ -515,12 +530,29 @@ export default function ActiveWorkoutView({ session, dayData, onCompleteSet, onS
               Exercise {session.exerciseIdx + 1} of {session.exercises.length}
             </div>
 
-            {/* Exercise name */}
-            <div style={{
-              fontSize: 38, fontWeight: 900, lineHeight: 1.1, marginBottom: 8,
-              color: "var(--text)",
-            }}>
-              {ex?.name}
+            {/* Exercise name + info button */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 8 }}>
+              <div style={{
+                fontSize: 38, fontWeight: 900, lineHeight: 1.1,
+                color: "var(--text)",
+              }}>
+                {ex?.name}
+              </div>
+              {onViewDemo && ex && (
+                <button
+                  onTouchEnd={e => { e.stopPropagation(); onViewDemo(ex); }}
+                  onClick={e => { e.stopPropagation(); onViewDemo(ex); }}
+                  style={{
+                    width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                    border: "1px solid var(--border2)", background: "var(--surface2)",
+                    color: "var(--muted)", fontSize: 14, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  ⓘ
+                </button>
+              )}
             </div>
 
             {/* Sets target */}
