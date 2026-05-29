@@ -71,6 +71,7 @@ export default function App() {
   const [completedWorkoutDates, setCompletedWorkoutDates] = useState(() =>
     loadStorage("pt-completed-dates", [])
   );
+  const [activities, setActivities] = useState(() => loadStorage("pt-activities", []));
   const [toast, setToast] = useState(null);
   const [coachOpen, setCoachOpen] = useState(false);
   const prevStreakRef = useRef(null);
@@ -157,6 +158,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem("pt-completed", JSON.stringify(completed)); }, [completed]);
   useEffect(() => { localStorage.setItem("pt-prefs", JSON.stringify(prefs)); }, [prefs]);
   useEffect(() => { localStorage.setItem("pt-completed-dates", JSON.stringify(completedWorkoutDates)); }, [completedWorkoutDates]);
+  useEffect(() => { localStorage.setItem("pt-activities", JSON.stringify(activities)); }, [activities]);
 
   useEffect(() => {
     if (dayExercises.length > 0 && dayDone === dayExercises.length) {
@@ -182,6 +184,14 @@ export default function App() {
     });
     navigator.vibrate?.([20, 50, 20]);
   };
+
+  const addActivity = useCallback((activity) => {
+    setActivities(prev => [activity, ...prev]);
+  }, []);
+
+  const deleteActivity = useCallback((id) => {
+    setActivities(prev => prev.filter(a => a.id !== id));
+  }, []);
 
   const toggleAilment = (key) => {
     setPrefs(p => ({
@@ -234,7 +244,12 @@ export default function App() {
   const workoutsCompleted = completedWorkoutDates.length;
   const missionProgress = Math.min(Math.round((workoutsCompleted / TARGET_WORKOUTS) * 100), 100);
   const missionComplete = workoutsCompleted >= TARGET_WORKOUTS;
-  const streak = calcStreak(completedWorkoutDates);
+  // Streak counts any active day — scheduled workout OR custom activity
+  const allActiveDates = [...new Set([
+    ...completedWorkoutDates,
+    ...activities.map(a => a.date),
+  ])].sort();
+  const streak = calcStreak(allActiveDates);
   const activeAilments = AILMENTS.filter(a => prefs.ailments.includes(a.key));
 
   useEffect(() => {
@@ -444,6 +459,7 @@ export default function App() {
         onSkipExercise={skipExercise}
         onSkipRest={skipRest}
         onEnd={endWorkout}
+        onViewDemo={setDemoEx}
       />
     );
   }
@@ -498,6 +514,9 @@ export default function App() {
             prefs={prefs}
             completedWorkoutDates={completedWorkoutDates}
             getDayExercises={getDayExercises}
+            activities={activities}
+            addActivity={addActivity}
+            deleteActivity={deleteActivity}
           />
         )}
         {activeTab === "progress" && (
@@ -513,6 +532,7 @@ export default function App() {
             prefs={prefs}
             restartMission={restartMission}
             setActiveTab={setActiveTab}
+            activities={activities}
           />
         )}
         {activeTab === "settings" && (

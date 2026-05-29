@@ -4,6 +4,162 @@ import { ALL_EXERCISES, WARMUP_PRESETS, AILMENTS, exerciseCategoryMap } from "..
 import { weekSchedule, DAY_ABBRS, getThisWeekDates } from "../data/schedule";
 import { askCoach } from "../utils/aiCoach";
 
+// ── Activity Logging ──────────────────────────────────────────────────────────
+
+const ACTIVITY_TYPES = [
+  { type: "walk",    emoji: "🚶", label: "Walk",    units: ["miles", "km", "min"] },
+  { type: "run",     emoji: "🏃", label: "Run",     units: ["miles", "km", "min"] },
+  { type: "bike",    emoji: "🚴", label: "Bike",    units: ["miles", "km", "min"] },
+  { type: "swim",    emoji: "🏊", label: "Swim",    units: ["laps", "min"] },
+  { type: "yoga",    emoji: "🧘", label: "Yoga",    units: ["min"] },
+  { type: "stretch", emoji: "🤸", label: "Stretch", units: ["min"] },
+  { type: "sport",   emoji: "⚽", label: "Sport",   units: ["hr", "min"] },
+  { type: "other",   emoji: "⚡", label: "Other",   units: ["min"] },
+];
+
+function formatDateLabel(dateStr) {
+  const today    = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  if (dateStr === today)     return "Today";
+  if (dateStr === yesterday) return "Yesterday";
+  return new Date(dateStr + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+function LogActivitySheet({ date, onSave, onClose }) {
+  const [type, setType] = useState(null);
+  const [value, setValue] = useState("");
+  const [unit, setUnit] = useState("miles");
+  const [note, setNote] = useState("");
+
+  const selectedType = ACTIVITY_TYPES.find(t => t.type === type);
+
+  function handleSave() {
+    if (!type) return;
+    onSave({
+      id: Date.now().toString(),
+      date,
+      type,
+      emoji: selectedType.emoji,
+      label: selectedType.label,
+      value: value.trim(),
+      unit: value.trim() ? unit : "",
+      note: note.trim(),
+    });
+    onClose();
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, background: "#000000bb",
+        zIndex: 400, display: "flex", flexDirection: "column", justifyContent: "flex-end",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: "var(--surface)", borderTop: "3px solid #e85d26",
+          borderRadius: "20px 20px 0 0", padding: "20px 20px 36px",
+          maxHeight: "85vh", overflowY: "auto",
+          animation: "slideUp 0.25s ease",
+        }}
+      >
+        <div style={{ width: 40, height: 4, borderRadius: 2, background: "var(--border2)", margin: "0 auto 20px" }} />
+
+        <div style={{ fontSize: 9, letterSpacing: 3, color: "var(--muted)", textTransform: "uppercase", marginBottom: 4 }}>
+          Log Activity
+        </div>
+        <div style={{ fontSize: 17, fontWeight: "bold", marginBottom: 20 }}>
+          {formatDateLabel(date)}
+        </div>
+
+        {/* Type grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 20 }}>
+          {ACTIVITY_TYPES.map(t => (
+            <button
+              key={t.type}
+              onClick={() => { setType(t.type); setUnit(t.units[0]); }}
+              style={{
+                padding: "10px 4px", borderRadius: 11,
+                border: `1px solid ${type === t.type ? "#e85d26" : "var(--border)"}`,
+                background: type === t.type ? "#e85d2618" : "var(--surface2)",
+                cursor: "pointer", fontFamily: "inherit",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+              }}
+            >
+              <span style={{ fontSize: 22 }}>{t.emoji}</span>
+              <span style={{ fontSize: 10, color: type === t.type ? "#e85d26" : "var(--muted)", letterSpacing: 0.5 }}>
+                {t.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Amount + unit */}
+        {type && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <input
+              type="number"
+              inputMode="decimal"
+              placeholder="Amount (optional)"
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              style={{
+                flex: 1, background: "var(--surface0)", border: "1px solid var(--border2)",
+                borderRadius: 10, padding: "10px 14px",
+                color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none",
+              }}
+            />
+            <select
+              value={unit}
+              onChange={e => setUnit(e.target.value)}
+              style={{
+                background: "var(--surface0)", border: "1px solid var(--border2)",
+                borderRadius: 10, padding: "10px 12px",
+                color: "var(--text)", fontSize: 14, fontFamily: "inherit",
+                outline: "none", cursor: "pointer",
+              }}
+            >
+              {selectedType.units.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* Note */}
+        {type && (
+          <input
+            placeholder="Note (optional) — e.g. morning loop"
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            style={{
+              width: "100%", boxSizing: "border-box",
+              background: "var(--surface0)", border: "1px solid var(--border2)",
+              borderRadius: 10, padding: "10px 14px", marginBottom: 20,
+              color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none",
+            }}
+          />
+        )}
+
+        <button
+          onClick={handleSave}
+          disabled={!type}
+          style={{
+            width: "100%", padding: "16px", borderRadius: 13, border: "none",
+            background: type ? "#e85d26" : "var(--surface2)",
+            color: type ? "#fff" : "var(--muted3)",
+            fontSize: 15, fontWeight: "bold", letterSpacing: 1,
+            fontFamily: "inherit", cursor: type ? "pointer" : "default",
+            transition: "background 0.15s",
+          }}
+        >
+          Save Activity
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
 
 function getGreeting() {
@@ -221,6 +377,7 @@ export default function ScheduleTab({
   missionStartDate, weekProg,
   hasCaution, toggleSet, completeAllSets, startWorkout, setDemoEx,
   prefs, completedWorkoutDates, getDayExercises,
+  activities, addActivity, deleteActivity,
 }) {
   const todayAbbr = DAY_ABBRS[new Date().getDay()];
   const isToday = selectedDay === todayAbbr;
@@ -229,6 +386,12 @@ export default function ScheduleTab({
   const lpFired = useRef(false);
   const [justCompleted, setJustCompleted] = useState(null);
   const [restDayPreview, setRestDayPreview] = useState(null); // { nextDay, exs }
+  const [logSheetOpen, setLogSheetOpen] = useState(false);
+
+  // Date string for the currently selected day (within this week)
+  const selectedDayIdx = weekSchedule.findIndex(d => d.day === selectedDay);
+  const selectedDayStr = thisWeekDates[selectedDayIdx] ?? todayStr;
+  const dayActivities = (activities ?? []).filter(a => a.date === selectedDayStr);
 
   function handleSetTap(exName, i) {
     const othersDone = [0, 1, 2].filter(j => j !== i && !!completed[`${todayStr}:${exName}-${j}`]).length;
@@ -428,15 +591,34 @@ export default function ScheduleTab({
       {dayData?.warmup && WARMUP_PRESETS[dayData.warmup] && (
         <div style={{
           background: "var(--info-surface)", border: "1px solid #10b98133",
-          borderRadius: 10, padding: "10px 14px", marginBottom: 12,
-          display: "flex", alignItems: "center", gap: 10,
+          borderRadius: 10, padding: "12px 14px", marginBottom: 12,
         }}>
-          <GiMeditation size={20} color="#10b981" />
-          <div>
-            <div style={{ fontSize: 10, color: "#10b981", letterSpacing: 2, textTransform: "uppercase", marginBottom: 2 }}>
-              Warm-up first — 2–3 min
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <GiMeditation size={18} color="#10b981" />
+            <div style={{ fontSize: 10, color: "#10b981", letterSpacing: 2, textTransform: "uppercase" }}>
+              Warm-up first — 10–15 min total
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted3)" }}>{WARMUP_PRESETS[dayData.warmup]}</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Cardio warm-up */}
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.3 }}>🚶</span>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: "bold", color: "var(--text)", marginBottom: 2 }}>10–15 min light cardio</div>
+                <div style={{ fontSize: 11, color: "var(--muted3)", lineHeight: 1.4 }}>
+                  Treadmill walk, stationary bike, or elliptical · fat-burning pace (Zone 2) · can talk but slightly breathless
+                </div>
+              </div>
+            </div>
+            <div style={{ height: 1, background: "var(--border)" }} />
+            {/* Movement prep */}
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1.3 }}>🤸</span>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: "bold", color: "var(--text)", marginBottom: 2 }}>Movement prep — 2 min</div>
+                <div style={{ fontSize: 11, color: "var(--muted3)" }}>{WARMUP_PRESETS[dayData.warmup]}</div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -721,6 +903,74 @@ export default function ScheduleTab({
             </div>
           );
         })
+      )}
+
+      {/* ── Extra Activities ── */}
+      <div style={{ marginTop: 20, marginBottom: 4 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase" }}>
+            Extra Activities
+          </div>
+          <button
+            onClick={() => setLogSheetOpen(true)}
+            style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "5px 12px", borderRadius: 20,
+              border: "1px solid #10b98144", background: "transparent",
+              color: "#10b981", fontSize: 11, fontFamily: "inherit",
+              cursor: "pointer", letterSpacing: 0.5,
+            }}
+          >
+            + Log Activity
+          </button>
+        </div>
+
+        {dayActivities.length === 0 ? (
+          <div style={{ fontSize: 11, color: "var(--muted3)", padding: "2px 0 6px" }}>
+            Log a walk, run, stretch, or anything extra you did today.
+          </div>
+        ) : (
+          dayActivities.map(a => (
+            <div key={a.id} style={{
+              background: "var(--surface)", border: "1px solid var(--border)",
+              borderLeft: "3px solid #10b981",
+              borderRadius: 11, padding: "11px 14px", marginBottom: 8,
+              display: "flex", alignItems: "center", gap: 10,
+            }}>
+              <span style={{ fontSize: 20, flexShrink: 0 }}>{a.emoji}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "var(--text)" }}>
+                  {a.label}
+                  {a.value && (
+                    <span style={{ fontWeight: "normal", color: "#10b981" }}> · {a.value} {a.unit}</span>
+                  )}
+                </div>
+                {a.note && (
+                  <div style={{ fontSize: 11, color: "var(--muted3)", marginTop: 2 }}>{a.note}</div>
+                )}
+              </div>
+              {deleteActivity && (
+                <button
+                  onClick={() => deleteActivity(a.id)}
+                  style={{
+                    background: "none", border: "none", color: "var(--muted3)",
+                    fontSize: 18, cursor: "pointer", padding: "2px 4px",
+                    lineHeight: 1, flexShrink: 0,
+                  }}
+                >×</button>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ── Log Activity Sheet ── */}
+      {logSheetOpen && (
+        <LogActivitySheet
+          date={selectedDayStr}
+          onSave={addActivity}
+          onClose={() => setLogSheetOpen(false)}
+        />
       )}
     </>
   );

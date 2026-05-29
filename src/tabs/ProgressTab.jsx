@@ -243,9 +243,88 @@ function RadarChart({ scores }) {
   );
 }
 
+// ── Weekly Activity Feed ───────────────────────────────────────────────────────
+
+function WeeklyFeed({ completedWorkoutDates, activities }) {
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    return d.toISOString().split("T")[0];
+  });
+
+  const activeDays = days.filter(d =>
+    completedWorkoutDates.includes(d) || activities.some(a => a.date === d)
+  );
+
+  if (activeDays.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: 3, textTransform: "uppercase" }}>
+          This Week
+        </div>
+        <div style={{ fontSize: 11, color: "#10b981", fontWeight: "bold" }}>
+          {activeDays.length} active day{activeDays.length !== 1 ? "s" : ""}
+        </div>
+      </div>
+      {days.map(dateStr => {
+        const isWorkout  = completedWorkoutDates.includes(dateStr);
+        const dayActvs   = activities.filter(a => a.date === dateStr);
+        if (!isWorkout && dayActvs.length === 0) return null;
+
+        const d      = new Date(dateStr + "T12:00:00");
+        const abbr   = DAY_ABBRS[d.getDay()];
+        const dayDef = weekSchedule.find(w => w.day === abbr);
+        const label  = dateStr === todayStr
+          ? "Today"
+          : d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
+        return (
+          <div key={dateStr} style={{
+            background: "var(--surface)", border: "1px solid var(--border)",
+            borderRadius: 11, padding: "12px 14px", marginBottom: 8,
+          }}>
+            <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>
+              {label}
+            </div>
+            {isWorkout && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: dayActvs.length ? 7 : 0 }}>
+                <span style={{
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: "#4ade8022", border: "1px solid #4ade8066",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <span style={{ fontSize: 10, color: "#4ade80" }}>✓</span>
+                </span>
+                <span style={{ fontSize: 13, fontWeight: "bold", color: "var(--text)" }}>
+                  {dayDef?.focus || "Workout"}
+                </span>
+              </div>
+            )}
+            {dayActvs.map(a => (
+              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>{a.emoji}</span>
+                <span style={{ fontSize: 13, color: "var(--muted)" }}>
+                  {a.label}
+                  {a.value && <span style={{ color: "#10b981" }}> · {a.value} {a.unit}</span>}
+                  {a.note && <span style={{ color: "var(--muted3)" }}> · {a.note}</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        );
+      }).filter(Boolean)}
+    </div>
+  );
+}
+
 // ── Heat Grid ──────────────────────────────────────────────────────────────────
 
-function HeatGrid({ completedDates }) {
+function HeatGrid({ completedDates, activities }) {
   const todayStr = toISO(new Date());
 
   const grid = useMemo(() => {
@@ -309,11 +388,14 @@ function HeatGrid({ completedDates }) {
 
               {/* Day cells */}
               {week.map((cell, di) => {
+                const hasActivity = !cell.isDone && (activities ?? []).some(a => a.date === cell.dateStr);
                 let bg, border, shadow;
                 if (cell.isFuture) {
                   bg = "transparent"; border = "1px solid transparent"; shadow = "none";
                 } else if (cell.isDone) {
                   bg = "#e85d26"; border = "none"; shadow = "0 0 7px #e85d2670";
+                } else if (hasActivity) {
+                  bg = "#10b981"; border = "none"; shadow = "0 0 5px #10b98155";
                 } else if (cell.isTraining) {
                   bg = "#e85d2615"; border = "1px solid #e85d2630"; shadow = "none";
                 } else {
@@ -336,9 +418,10 @@ function HeatGrid({ completedDates }) {
       </div>
 
       {/* Legend */}
-      <div style={{ display: "flex", gap: 14, marginTop: 12, justifyContent: "flex-end", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 10, marginTop: 12, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
         {[
-          { bg: "#e85d26", shadow: "0 0 6px #e85d2660", label: "Completed" },
+          { bg: "#e85d26", shadow: "0 0 6px #e85d2660", label: "Workout" },
+          { bg: "#10b981", shadow: "0 0 4px #10b98150", label: "Activity" },
           { bg: "#e85d2615", border: "1px solid #e85d2630", label: "Scheduled" },
           { bg: "#ffffff05", border: "1px solid #ffffff08", label: "Rest" },
         ].map(({ bg, border, shadow, label }) => (
@@ -428,7 +511,7 @@ Ailments: ${prefs?.ailments?.length ? prefs.ailments.join(", ") : "none"}`,
 export default function ProgressTab({
   streak, missionComplete, workoutsCompleted, missionProgress, missionDay,
   completedWorkoutDates, activeAilments, prefs, weekNumber,
-  restartMission, setActiveTab,
+  restartMission, setActiveTab, activities,
 }) {
   const radarScores = useMemo(
     () => computeRadarScores(completedWorkoutDates),
@@ -437,6 +520,9 @@ export default function ProgressTab({
 
   return (
     <>
+      {/* ── Weekly activity feed ── */}
+      <WeeklyFeed completedWorkoutDates={completedWorkoutDates} activities={activities ?? []} />
+
       {/* ── AI Weekly Narrative ── */}
       <WeeklyNarrative
         prefs={prefs}
@@ -514,7 +600,7 @@ export default function ProgressTab({
           background: "var(--surface)", border: "1px solid var(--border)",
           borderRadius: 13, padding: "14px 16px",
         }}>
-          <HeatGrid completedDates={completedWorkoutDates} />
+          <HeatGrid completedDates={completedWorkoutDates} activities={activities ?? []} />
         </div>
       </div>
 
