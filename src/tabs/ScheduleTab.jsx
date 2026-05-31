@@ -376,7 +376,7 @@ export default function ScheduleTab({
   todayStr, completed,
   missionStartDate, weekProg,
   hasCaution, toggleSet, completeAllSets, startWorkout, setDemoEx,
-  prefs, completedWorkoutDates, getDayExercises,
+  prefs, completedWorkoutDates, getDayExercises, missionDay,
   activities, addActivity, deleteActivity,
 }) {
   const todayAbbr = DAY_ABBRS[new Date().getDay()];
@@ -679,17 +679,35 @@ export default function ScheduleTab({
             Or a 10-min walk counts. See you tomorrow.
           </div>
 
-          {/* Train Anyway — today only */}
+          {/* ── Train anyway: missed days + train ahead ── */}
           {isToday && getDayExercises && (() => {
-            const todayIdx = weekSchedule.findIndex(d => d.day === todayAbbr);
-            const nextDay = weekSchedule.slice(todayIdx + 1).find(d => d.cats.length > 0)
-              || weekSchedule.find(d => d.cats.length > 0);
-            if (!nextDay) return null;
-            const exs = getDayExercises(nextDay.day, 1);
+            // Missed training days in the past 7 days (not completed, not rest days)
+            const missedDays = [];
+            for (let i = 1; i <= 6; i++) {
+              const d = new Date(new Date(todayStr).getTime() - i * 86400000);
+              const dateStr = d.toISOString().split("T")[0];
+              const abbr = DAY_ABBRS[d.getDay()];
+              const def = weekSchedule.find(w => w.day === abbr);
+              if (!def || !def.cats.length) continue;
+              if ((completedWorkoutDates ?? []).includes(dateStr)) continue;
+              missedDays.push({ dateStr, abbr, dayDef: def });
+            }
 
+            // Next scheduled training day after today
+            const todayIdx = weekSchedule.findIndex(d => d.day === todayAbbr);
+            const nextTrainingDay = weekSchedule.slice(todayIdx + 1).find(d => d.cats.length > 0)
+              || weekSchedule.find(d => d.cats.length > 0);
+
+            // Daily rotation seed — changes each mission day so exercises vary
+            const seed = missionDay ?? 1;
+
+            // ── Preview panel (exercise checklist) ─────────────────────────────
             if (restDayPreview) {
+              const { dayDef: pd, exs: pExs, selected } = restDayPreview;
+              const selCount = selected.size;
               return (
                 <div style={{ marginTop: 20 }}>
+                  {/* Header */}
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                     <button
                       onClick={() => setRestDayPreview(null)}
@@ -699,85 +717,163 @@ export default function ScheduleTab({
                       }}
                     >←</button>
                     <div>
-                      <div style={{ fontSize: 9, color: restDayPreview.nextDay.color, letterSpacing: 2, textTransform: "uppercase" }}>
-                        {restDayPreview.nextDay.day} · {restDayPreview.nextDay.focus}
+                      <div style={{ fontSize: 9, color: pd.color, letterSpacing: 2, textTransform: "uppercase" }}>
+                        {pd.day} · {pd.focus}
                       </div>
                       <div style={{ fontSize: 13, fontWeight: "bold", color: "var(--text)" }}>
-                        {restDayPreview.exs.length} exercises
+                        {selCount} of {pExs.length} exercise{pExs.length !== 1 ? "s" : ""} selected
                       </div>
                     </div>
                   </div>
 
-                  {restDayPreview.exs.map((ex, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => setDemoEx(ex)}
-                      style={{
-                        background: "var(--surface)", border: "1px solid var(--border)",
-                        borderLeft: `3px solid ${restDayPreview.nextDay.color}`,
-                        borderRadius: 11, padding: "12px 14px", marginBottom: 8,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: "bold", color: "var(--text)", marginBottom: 4 }}>{ex.name}</div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {/* Exercise checklist */}
+                  {pExs.map((ex, idx) => {
+                    const checked = selected.has(ex.name);
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => setRestDayPreview(prev => {
+                          const next = new Set(prev.selected);
+                          if (next.has(ex.name)) next.delete(ex.name); else next.add(ex.name);
+                          return { ...prev, selected: next };
+                        })}
+                        style={{
+                          background: checked ? "var(--surface)" : "var(--surface2)",
+                          border: `1px solid ${checked ? pd.color + "44" : "var(--border)"}`,
+                          borderLeft: `3px solid ${checked ? pd.color : "var(--border2)"}`,
+                          borderRadius: 11, padding: "11px 14px", marginBottom: 8,
+                          cursor: "pointer", opacity: checked ? 1 : 0.5,
+                          display: "flex", alignItems: "center", gap: 12,
+                          transition: "opacity 0.15s",
+                        }}
+                      >
+                        <div style={{
+                          width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                          border: `2px solid ${checked ? pd.color : "var(--border3)"}`,
+                          background: checked ? pd.color : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          {checked && <span style={{ fontSize: 11, color: "#fff", fontWeight: "bold" }}>✓</span>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: "bold", color: "var(--text)" }}>{ex.name}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
                             <span style={{
                               background: "var(--surface3)", border: "1px solid var(--border3)",
                               borderRadius: 5, padding: "2px 8px",
-                              fontSize: 11, fontWeight: "bold", color: restDayPreview.nextDay.color,
+                              fontSize: 11, fontWeight: "bold",
+                              color: checked ? pd.color : "var(--muted3)",
                             }}>{ex.sets}</span>
-                            <span style={{ fontSize: 11, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.notes}</span>
+                            <span style={{ fontSize: 11, color: "var(--muted3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.notes}</span>
                           </div>
                         </div>
-                        <span style={{ fontSize: 13, color: "var(--muted3)", flexShrink: 0 }}>ⓘ</span>
+                        <button
+                          onClick={e => { e.stopPropagation(); setDemoEx(ex); }}
+                          style={{
+                            background: "none", border: "none", color: "var(--muted3)",
+                            fontSize: 14, cursor: "pointer", padding: "2px 4px", flexShrink: 0,
+                          }}
+                        >ⓘ</button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   <button
-                    onClick={() => startWorkout(restDayPreview.exs)}
+                    onClick={() => selCount > 0 && startWorkout(pExs.filter(e => selected.has(e.name)))}
+                    disabled={selCount === 0}
                     style={{
                       width: "100%", padding: "16px", borderRadius: 13, border: "none",
-                      background: restDayPreview.nextDay.color,
-                      color: "#fff", fontSize: 15, fontWeight: "bold",
-                      letterSpacing: 1, fontFamily: "inherit", cursor: "pointer", marginTop: 4,
+                      background: selCount > 0 ? pd.color : "var(--surface2)",
+                      color: selCount > 0 ? "#fff" : "var(--muted3)",
+                      fontSize: 15, fontWeight: "bold", letterSpacing: 1,
+                      fontFamily: "inherit", cursor: selCount > 0 ? "pointer" : "default", marginTop: 4,
                     }}
                   >
-                    ▶ Start Workout
+                    ▶ Start · {selCount} exercise{selCount !== 1 ? "s" : ""}
                   </button>
                 </div>
               );
             }
 
+            // ── Options list ───────────────────────────────────────────────────
+            if (!missedDays.length && !nextTrainingDay) return null;
+
             return (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
-                  Still want to train?
-                </div>
-                <button
-                  onClick={() => setRestDayPreview({ nextDay, exs })}
-                  style={{
-                    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "16px", borderRadius: 11, boxSizing: "border-box",
-                    border: `1px solid ${nextDay.color}44`, background: `${nextDay.color}0d`,
-                    cursor: "pointer", fontFamily: "inherit", textAlign: "left",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: 9, color: nextDay.color, letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>
-                      {nextDay.day} · {nextDay.focus}
+                {/* Missed days */}
+                {missedDays.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 9, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>
+                      Make up a missed workout
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: "bold", color: "var(--text)", marginBottom: 3 }}>
-                      Do tomorrow's workout today
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--muted)" }}>
-                      {exs.length} exercises · fresh rotation, won't repeat {nextDay.day}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 20, color: nextDay.color, flexShrink: 0, marginLeft: 12 }}>›</span>
-                </button>
+                    {missedDays.map(({ dateStr, dayDef }) => {
+                      const exs = getDayExercises(dayDef.day, seed % 7 || 1);
+                      const lbl = new Date(dateStr + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+                      return (
+                        <button
+                          key={dateStr}
+                          onClick={() => setRestDayPreview({ dayDef, exs, selected: new Set(exs.map(e => e.name)) })}
+                          style={{
+                            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                            padding: "14px 16px", borderRadius: 11, boxSizing: "border-box", marginBottom: 8,
+                            border: `1px solid ${dayDef.color}44`, background: `${dayDef.color}0d`,
+                            cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 9, color: dayDef.color, letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>
+                              Missed · {lbl}
+                            </div>
+                            <div style={{ fontSize: 15, fontWeight: "bold", color: "var(--text)", marginBottom: 2 }}>
+                              {dayDef.focus}
+                            </div>
+                            <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                              {exs.length} exercises · tap to customize
+                            </div>
+                          </div>
+                          <span style={{ fontSize: 20, color: dayDef.color, flexShrink: 0, marginLeft: 12 }}>›</span>
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+
+                {/* Train ahead */}
+                {nextTrainingDay && (() => {
+                  const exs = getDayExercises(nextTrainingDay.day, (seed % 7) + 1);
+                  return (
+                    <>
+                      <div style={{
+                        fontSize: 9, color: "var(--muted3)", letterSpacing: 3, textTransform: "uppercase",
+                        marginBottom: 10, marginTop: missedDays.length ? 14 : 0,
+                      }}>
+                        {missedDays.length ? "Or train ahead" : "Still want to train?"}
+                      </div>
+                      <button
+                        onClick={() => setRestDayPreview({ dayDef: nextTrainingDay, exs, selected: new Set(exs.map(e => e.name)) })}
+                        style={{
+                          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "14px 16px", borderRadius: 11, boxSizing: "border-box",
+                          border: `1px solid ${nextTrainingDay.color}44`, background: `${nextTrainingDay.color}0d`,
+                          cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: 9, color: nextTrainingDay.color, letterSpacing: 2, textTransform: "uppercase", marginBottom: 3 }}>
+                            {nextTrainingDay.day} · Train ahead
+                          </div>
+                          <div style={{ fontSize: 15, fontWeight: "bold", color: "var(--text)", marginBottom: 2 }}>
+                            {nextTrainingDay.focus}
+                          </div>
+                          <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                            {exs.length} exercises · won't repeat {nextTrainingDay.day} · tap to customize
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 20, color: nextTrainingDay.color, flexShrink: 0, marginLeft: 12 }}>›</span>
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
             );
           })()}

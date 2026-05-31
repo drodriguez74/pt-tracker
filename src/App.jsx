@@ -514,6 +514,7 @@ export default function App() {
             prefs={prefs}
             completedWorkoutDates={completedWorkoutDates}
             getDayExercises={getDayExercises}
+            missionDay={missionDay}
             activities={activities}
             addActivity={addActivity}
             deleteActivity={deleteActivity}
