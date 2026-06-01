@@ -179,6 +179,28 @@ export default function ExerciseDemoModal({ demoEx, setDemoEx, prefs, AILMENTS }
           </div>
         )}
 
+        {/* Free weight alternative */}
+        {demoEx.freeWeightAlt && prefs?.gymType && prefs.gymType !== "bodyweight" && (
+          <div style={{ background: "#1e3a5f22", border: "1px solid #3b82f633", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+            <div style={{ fontSize: 9, color: "#3b82f6", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 12 }}>🏋️</span> Free Weight Alternative
+            </div>
+            <div style={{
+              display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+              background: "var(--surface)", border: "1px solid #3b82f633",
+              borderRadius: 8, padding: "11px 13px",
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: "bold", color: "var(--text)", marginBottom: 3 }}>{demoEx.freeWeightAlt.name}</div>
+                <div style={{ fontSize: 11, color: "#3b82f6", marginBottom: 5, display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 10 }}>⚙</span> {demoEx.freeWeightAlt.equipment} · {demoEx.freeWeightAlt.sets}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.45 }}>{demoEx.freeWeightAlt.notes}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* YouTube button */}
         <a
           href={`https://www.youtube.com/results?search_query=${ytQuery}`}

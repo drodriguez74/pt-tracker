@@ -1,5 +1,5 @@
 import { AILMENTS } from "../data/exercises";
-import { AGE_RANGES } from "../data/schedule";
+import { AGE_RANGES, GYM_TYPES } from "../data/schedule";
 
 function SectionHeader({ label }) {
   return (
@@ -72,6 +72,46 @@ export default function SettingsTab({
       {/* ── Workout ── */}
       <SectionHeader label="Workout" />
       <Card>
+        <Row>
+          <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Gym Setup</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {GYM_TYPES.map(gym => {
+              const active = (prefs.gymType ?? "bodyweight") === gym.key;
+              return (
+                <button
+                  key={gym.key}
+                  onClick={() => setPrefs(p => ({ ...p, gymType: gym.key }))}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "10px 14px", borderRadius: 10, border: "1px solid",
+                    borderColor: active ? "#e85d26" : "var(--border2)",
+                    background: active ? "#e85d2622" : "transparent",
+                    cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                    transition: "border-color 0.15s, background 0.15s",
+                  }}
+                >
+                  <div style={{
+                    width: 16, height: 16, borderRadius: "50%", flexShrink: 0,
+                    border: `2px solid ${active ? "#e85d26" : "var(--border3)"}`,
+                    background: active ? "#e85d26" : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {active && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: active ? "bold" : "normal", color: active ? "#e85d26" : "var(--text)" }}>{gym.label}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1 }}>{gym.note}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {(prefs.gymType ?? "bodyweight") !== "bodyweight" && (
+            <div style={{ fontSize: 11, color: "var(--muted2)", marginTop: 10, padding: "8px 10px", background: "var(--surface2)", borderRadius: 8, lineHeight: 1.5 }}>
+              Free weight alternatives will appear in exercise details — tap ⓘ on any exercise.
+            </div>
+          )}
+        </Row>
         <Row style={{ borderBottom: "none" }}>
           <div style={{ fontSize: 10, color: "var(--muted3)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Rest Between Sets</div>
           <div style={{ display: "flex", gap: 7 }}>
