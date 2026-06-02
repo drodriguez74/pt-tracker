@@ -111,6 +111,12 @@ export default function App() {
     : 1;
   const weekNumber = Math.floor((missionDay - 1) / 7);
 
+  const applyGymMode = (ex) => {
+    if ((prefs.gymType ?? "bodyweight") === "bodyweight" || !ex.freeWeightAlt) return ex;
+    const { name, sets, notes, equipment } = ex.freeWeightAlt;
+    return { ...ex, name, sets, notes, equipment, freeWeightAlt: undefined };
+  };
+
   const getRotatedExercises = (catKey, count) => {
     const exs = ALL_EXERCISES[catKey]?.exercises || [];
     if (!exs.length) return [];
@@ -119,7 +125,7 @@ export default function App() {
     const fallback  = exs.filter(e => earlyWeeks ? e.difficulty !== "beginner" : e.difficulty === "beginner");
     const pool = preferred.length >= count ? preferred : [...preferred, ...fallback];
     const offset = (weekNumber * count) % pool.length;
-    return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, count);
+    return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, count).map(applyGymMode);
   };
 
   const getDayExercises = useCallback((dayAbbr, weekOffset = 0) => {
@@ -135,9 +141,9 @@ export default function App() {
       const fallback   = exs.filter(e => earlyWeeks ? e.difficulty !== "beginner" : e.difficulty === "beginner");
       const pool = preferred.length >= count ? preferred : [...preferred, ...fallback];
       const offset = (wkNum * count) % pool.length;
-      return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, count);
+      return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, count).map(applyGymMode);
     });
-  }, [weekNumber]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [weekNumber, prefs.gymType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dayData = weekSchedule.find(d => d.day === selectedDay);
   const dayExercises = dayData?.cats.flatMap((ck, ci) =>
