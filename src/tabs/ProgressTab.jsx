@@ -18,13 +18,18 @@ const CAT_TO_AXIS = {
 const RADAR_AXES = ["Push", "Pull", "Legs", "Core", "Cardio", "Mobility"];
 const HEAT_WEEKS = 16;
 
+const ACTIVITY_TYPE_TO_AXIS = {
+  run: "Cardio", walk: "Cardio", bike: "Cardio", swim: "Cardio", sport: "Cardio",
+  yoga: "Mobility", stretch: "Mobility",
+};
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function toISO(d) {
   return d.toISOString().split("T")[0];
 }
 
-function computeRadarScores(completedDates) {
+function computeRadarScores(completedDates, activities = []) {
   const scores = Object.fromEntries(RADAR_AXES.map(l => [l, 0]));
   for (const dateStr of completedDates) {
     const d = new Date(dateStr + "T12:00:00");
@@ -35,6 +40,10 @@ function computeRadarScores(completedDates) {
       const axis = CAT_TO_AXIS[cat];
       if (axis) scores[axis]++;
     }
+  }
+  for (const a of activities) {
+    const axis = ACTIVITY_TYPE_TO_AXIS[a.type];
+    if (axis) scores[axis]++;
   }
   return scores;
 }
@@ -514,8 +523,8 @@ export default function ProgressTab({
   restartMission, setActiveTab, activities,
 }) {
   const radarScores = useMemo(
-    () => computeRadarScores(completedWorkoutDates),
-    [completedWorkoutDates]
+    () => computeRadarScores(completedWorkoutDates, activities ?? []),
+    [completedWorkoutDates, activities]
   );
 
   return (
