@@ -456,6 +456,9 @@ export default function ScheduleTab({
           const dateStr = thisWeekDates[idx];
           const isDone = (completedWorkoutDates ?? []).includes(dateStr);
           const isRest = d.cats.length === 0;
+          const restDayWorked = isRest && (
+            isDone || (activities ?? []).some(a => a.date === dateStr)
+          );
 
           return (
             <button
@@ -485,10 +488,10 @@ export default function ScheduleTab({
               </div>
               {/* Completion indicator */}
               <div style={{ marginTop: 6, display: "flex", justifyContent: "center" }}>
-                {isRest ? (
+                {isRest && !restDayWorked ? (
                   <div style={{ width: 14, height: 2, borderRadius: 1, background: "var(--border2)" }} />
-                ) : isDone ? (
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: d.color }} />
+                ) : isDone || restDayWorked ? (
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: restDayWorked ? "#10b981" : d.color }} />
                 ) : (
                   <div style={{
                     width: 6, height: 6, borderRadius: "50%",
