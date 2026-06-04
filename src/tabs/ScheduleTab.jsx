@@ -666,6 +666,41 @@ export default function ScheduleTab({
       {/* ── Exercise list or rest day ── */}
       {dayExercises.length === 0 ? (
         <div>
+          {/* Completed rest-day workout banner */}
+          {isToday && (completedWorkoutDates ?? []).includes(todayStr) && (() => {
+            const doneNames = getExercisesForDate(completed, todayStr);
+            if (!doneNames.length) return null;
+            return (
+              <div style={{
+                background: "#10b98118", border: "1px solid #10b98144",
+                borderRadius: 13, padding: "16px 18px", marginBottom: 12,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <div style={{ fontSize: 28 }}>✅</div>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: "bold", color: "#4ade80", marginBottom: 2 }}>
+                      Rest day workout done
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)" }}>
+                      {doneNames.length} exercise{doneNames.length !== 1 ? "s" : ""} completed today
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  {doneNames.map(name => (
+                    <div key={name} style={{
+                      fontSize: 12, color: "var(--text)",
+                      padding: "6px 10px", borderRadius: 8,
+                      background: "var(--surface)", border: "1px solid var(--border)",
+                    }}>
+                      {name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           <div style={{
             background: "var(--info-surface)", border: "1px solid #10b98133",
             borderRadius: 13, padding: "16px 18px", marginBottom: 12,
@@ -713,7 +748,7 @@ export default function ScheduleTab({
           </div>
 
           {/* ── Train anyway: missed days + train ahead ── */}
-          {isToday && getDayExercises && (() => {
+          {isToday && getDayExercises && !(completedWorkoutDates ?? []).includes(todayStr) && (() => {
             // Missed training days in the past 6 days — cap at 2 to prevent volume stacking
             const allMissed = [];
             for (let i = 1; i <= 6; i++) {
