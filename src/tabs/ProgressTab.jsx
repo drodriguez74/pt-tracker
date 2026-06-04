@@ -40,6 +40,8 @@ function computeRadarScores(completedDates, activities = []) {
       const axis = CAT_TO_AXIS[cat];
       if (axis) scores[axis]++;
     }
+    // Warmup presets on weekday workouts include mobility movements — credit Mobility
+    if (day.warmup) scores["Mobility"]++;
   }
   for (const a of activities) {
     const axis = ACTIVITY_TYPE_TO_AXIS[a.type];
